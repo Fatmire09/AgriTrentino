@@ -7,12 +7,15 @@ const Utente = require('../models/utente');
 // REGISTRAZIONE
 router.post('/registrazione', async (req, res) => {
   try {
-    const { nome, email, password } = req.body;
+    const { nome, email, password, azienda } = req.body;
     const passwordCriptata = await bcrypt.hash(password, 10);
-    const utente = new Utente({ nome, email, password: passwordCriptata });
+    const utente = new Utente({ nome, email, password: passwordCriptata, azienda });
     await utente.save();
     res.status(201).json({ messaggio: 'Utente registrato con successo!' });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ errore: 'Email già registrata. Prova ad accedere.' });
+    }
     res.status(400).json({ errore: err.message });
   }
 });
