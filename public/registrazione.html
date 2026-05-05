@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriTrentino — Registrati</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green-deep: #1a3a2a;
+    --green-mid: #2d6a4f;
+    --green-bright: #52b788;
+    --gold: #c9a84c;
+    --cream: #f5f0e8;
+    --white: #ffffff;
+    --text-muted: #555;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* SINISTRA */
+  .left {
+    position: relative;
+    background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80');
+    background-size: cover; background-position: center;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 2.5rem;
+  }
+  .left-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(26,58,42,0.88) 0%, rgba(45,106,79,0.75) 100%);
+  }
+  .left-content { position: relative; z-index: 2; }
+  .logo {
+    display: flex; align-items: center; gap: 0.7rem;
+    text-decoration: none; margin-bottom: 4rem;
+  }
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 700; color: white;
+  }
+  .left h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem; font-weight: 900; line-height: 1.1;
+    color: white; margin-bottom: 1rem;
+  }
+  .left h2 em { font-style: italic; color: #b7e4c7; }
+  .left p { color: rgba(255,255,255,0.75); font-size: 1rem; line-height: 1.7; max-width: 360px; }
+  .left-footer { position: relative; z-index: 2; color: rgba(255,255,255,0.4); font-size: 0.8rem; }
+
+  /* DESTRA */
+  .right {
+    background: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem 4rem;
+  }
+  .form-box { width: 100%; max-width: 420px; }
+  .form-box h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 900;
+    color: var(--green-deep); margin-bottom: 0.4rem;
+  }
+  .form-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .form-box p a { color: var(--green-mid); text-decoration: none; font-weight: 500; }
+
+  .field { margin-bottom: 1.2rem; }
+  .field label {
+    display: block; font-size: 0.82rem; font-weight: 500;
+    color: var(--green-deep); margin-bottom: 0.4rem;
+    letter-spacing: 0.03em;
+  }
+  .field input {
+    width: 100%; padding: 0.85rem 1rem;
+    border: 1.5px solid #ddd; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    background: white; color: var(--green-deep);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--green-bright); }
+
+  .btn-submit {
+    width: 100%; padding: 0.9rem;
+    background: var(--green-deep); color: white;
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500;
+    cursor: pointer; margin-top: 0.5rem;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .btn-submit:hover { background: var(--green-mid); transform: translateY(-1px); }
+
+  .messaggio {
+    margin-top: 1rem; padding: 0.8rem 1rem;
+    border-radius: 8px; font-size: 0.88rem;
+    display: none;
+  }
+  .messaggio.successo { background: #d1fae5; color: #065f46; display: block; }
+  .messaggio.errore { background: #fee2e2; color: #991b1b; display: block; }
+
+  @media (max-width: 768px) {
+    body { grid-template-columns: 1fr; }
+    .left { display: none; }
+    .right { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="left">
+  <div class="left-overlay"></div>
+  <div class="left-content">
+    <a href="/" class="logo">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="18" fill="rgba(82,183,136,0.2)"/>
+        <path d="M18 8 C14 12 10 16 12 22 C14 28 22 28 24 22 C26 16 22 12 18 8Z" fill="#52b788"/>
+        <path d="M18 8 L18 28" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+      </svg>
+      <span class="logo-text">AgriTrentino</span>
+    </a>
+    <div>
+      <h2>Gestisci i tuoi campi con <em>intelligenza</em></h2>
+      <p>Unisciti agli agricoltori trentini che usano dati reali per decisioni migliori. Registrati e inizia subito.</p>
+    </div>
+  </div>
+  <div class="left-footer">© 2026 AgriTrentino · Università di Trento</div>
+</div>
+
+<div class="right">
+  <div class="form-box">
+    <h1>Crea il tuo account</h1>
+    <p>Hai già un account? <a href="/login.html">Accedi</a></p>
+
+    <div class="field">
+      <label>Nome completo</label>
+      <input type="text" id="nome" placeholder="Ada Rossi">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="ada@email.it">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+
+    <button class="btn-submit" onclick="registrati()">Crea account</button>
+    <div class="messaggio" id="messaggio"></div>
+  </div>
+</div>
+
+<script>
+async function registrati() {
+  const nome = document.getElementById('nome').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('messaggio');
+
+  try {
+    const res = await fetch('/api/v1/auth/registrazione', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, password })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      msg.className = 'messaggio successo';
+      msg.textContent = 'Account creato! Verrai reindirizzato al login...';
+      setTimeout(() => window.location.href = '/login.html', 2000);
+    } else {
+      msg.className = 'messaggio errore';
+      msg.textContent = data.errore || 'Errore durante la registrazione.';
+    }
+  } catch (err) {
+    msg.className = 'messaggio errore';
+    msg.textContent = 'Errore di connessione al server.';
+  }
+}
+</script>
+</body>
+</html>

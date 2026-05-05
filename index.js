@@ -6,17 +6,16 @@ const app = express();
 
 app.use(express.json());
 
-app.get('/test', (req, res) => res.json({ ok: true }));
+// Pagine pubbliche
+app.use(express.static('public'));
 
-// Rotte pubbliche
+// Rotte API pubbliche
 app.use('/api/v1/auth', require('./routes/auth'));
 
-// Middleware di autenticazione - protegge tutto quello che viene dopo
+// Da qui in poi tutto è protetto
 app.use(tokenChecker);
 
-// Rotte protette (da aggiungere qui sotto)
-
-app.use(express.static('public'));
+// Rotte API protette (da aggiungere qui sotto)
 
 mongoose.connect(process.env.DB_URL)
   .then(() => console.log('Connesso a MongoDB!'))
