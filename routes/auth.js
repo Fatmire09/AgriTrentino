@@ -25,7 +25,7 @@ router.post('/login', async (req, res) => {
     if (!utente) return res.status(400).json({ errore: 'Utente non trovato' });
     const valida = await bcrypt.compare(password, utente.password);
     if (!valida) return res.status(400).json({ errore: 'Password errata' });
-    const token = jwt.sign({ id: utente._id }, 'segreto', { expiresIn: '7d' });
+    const token = jwt.sign({ id: utente._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, nome: utente.nome });
   } catch (err) {
     res.status(500).json({ errore: err.message });

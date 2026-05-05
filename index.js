@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-require('dotenv').config();
+const tokenChecker = require('./tokenChecker');
 
 const app = express();
 
@@ -8,12 +8,17 @@ app.use(express.json());
 
 app.get('/test', (req, res) => res.json({ ok: true }));
 
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
+// Rotte pubbliche
+app.use('/api/v1/auth', require('./routes/auth'));
+
+// Middleware di autenticazione - protegge tutto quello che viene dopo
+app.use(tokenChecker);
+
+// Rotte protette (da aggiungere qui sotto)
 
 app.use(express.static('public'));
 
-mongoose.connect('mongodb://localhost:27017/agritrentino')
+mongoose.connect(process.env.DB_URL)
   .then(() => console.log('Connesso a MongoDB!'))
   .catch((err) => console.log('Errore di connessione:', err));
 
