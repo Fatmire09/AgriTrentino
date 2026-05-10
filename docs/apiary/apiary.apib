@@ -1,0 +1,64 @@
+FORMAT: 1A
+HOST: http://localhost:3001
+
+# AgriTrentino API
+
+API REST della piattaforma AgriTrentino — filiera agricola digitale del Trentino.
+
+Tutte le risposte sono in formato JSON. Gli endpoint pubblici non richiedono autenticazione.
+
+## Versione
+`1.0.0`
+
+---
+
+# Group Landing Page
+
+Risorse pubbliche accessibili senza autenticazione, utilizzate dalla landing page informativa.
+
+## Informazioni piattaforma [/]
+
+### Recupera informazioni piattaforma [GET]
+
+Restituisce le informazioni generali della piattaforma AgriTrentino: nome, versione,
+descrizione e lista degli obiettivi. Utilizzato dalla landing page per presentare
+la piattaforma ai visitatori non registrati.
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
++ Response 200 (application/json)
+
+    + Attributes (object)
+        + platform (string, required) - Nome della piattaforma
+        + version (string, required) - Versione corrente dell'API
+        + description (string, required) - Descrizione della piattaforma
+        + objectives (array[string], required) - Lista degli obiettivi principali
+
+    + Body
+
+            {
+                "platform": "AgriTrentino",
+                "version": "1.0.0",
+                "description": "Piattaforma digitale per la filiera agricola trentina",
+                "objectives": [
+                    "Connettere agricoltori e acquirenti",
+                    "Tracciare la filiera agroalimentare",
+                    "Semplificare la burocrazia agricola",
+                    "Valorizzare i prodotti locali del Trentino"
+                ]
+            }
+
++ Response 500 (application/json)
+
+    Errore interno del server.
+
+    + Body
+
+            {
+                "error": "Internal Server Error",
+                "message": "Si è verificato un errore imprevisto. Riprovare più tardi."
+            }
