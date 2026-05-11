@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-// POST /api/v1/auth/register
 router.post('/register', async (req, res) => {
   const { email, password, nome, nomeAzienda } = req.body;
 
@@ -17,6 +16,10 @@ router.post('/register', async (req, res) => {
 
   if (password.length < 8) {
     return res.status(400).json({ error: 'La password deve essere di almeno 8 caratteri' });
+  }
+
+  if (password.length > 32) {
+    return res.status(400).json({ error: 'La password non può superare 32 caratteri' });
   }
 
   try {
@@ -39,4 +42,3 @@ router.post('/register', async (req, res) => {
 });
 
 module.exports = router;
-
