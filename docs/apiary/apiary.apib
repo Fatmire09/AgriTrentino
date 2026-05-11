@@ -62,3 +62,57 @@ la piattaforma ai visitatori non registrati.
                 "error": "Internal Server Error",
                 "message": "Si è verificato un errore imprevisto. Riprovare più tardi."
             }
+# Group Autenticazione
+
+Endpoint per la gestione dell'autenticazione degli utenti.
+
+## Registrazione [/api/v1/auth/register]
+
+### Crea nuovo account [POST]
+
+Crea un nuovo account operatore agricolo. Valida formato email,
+unicità email e nomeAzienda. La password viene cifrata prima del salvataggio.
+
++ Request (application/json)
+
+    + Body
+
+            {
+                "email": "mario.rossi@example.com",
+                "password": "Password123",
+                "nome": "Mario Rossi",
+                "nomeAzienda": "Azienda Agricola Rossi"
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "message": "Account creato con successo",
+                "user": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d0e",
+                    "email": "mario.rossi@example.com",
+                    "nome": "Mario Rossi",
+                    "nomeAzienda": "Azienda Agricola Rossi",
+                    "autenticato": true
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Email, password e nome sono obbligatori" }
+
++ Response 409 (application/json)
+
+    + Body
+
+            { "error": "Email già registrata" }
+
++ Response 500 (application/json)
+
+    + Body
+
+            { "error": "Errore interno del server" }
