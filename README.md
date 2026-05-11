@@ -47,10 +47,9 @@ npm run dev          # http://localhost:3001
 
 ## Team
 
-- Ada Antico
-- Fatmire Emush
-- Alessia Giunta
+- Ada Antico: adasofia.antico@studenti.unitn.it
+- Fatmire Emush: fatmire.emush@studenti.unitn.it
 
 ## Corso
 
-Ingegneria del Software — Università di Trento, A.A. 2024/2025
+Ingegneria del Software — Università di Trento, A.A. 2025/2026
