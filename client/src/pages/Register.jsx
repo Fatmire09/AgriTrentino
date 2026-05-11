@@ -2,6 +2,33 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 
+function PasswordStrength({ password }) {
+  const getStrength = () => {
+    if (password.length === 0) return null
+    if (password.length < 8) return { label: 'Troppo corta', color: 'bg-red-400', width: 'w-1/4' }
+    if (password.length > 32) return { label: 'Troppo lunga', color: 'bg-red-400', width: 'w-full' }
+    const hasUpper = /[A-Z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+    const hasSpecial = /[^A-Za-z0-9]/.test(password)
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length
+    if (score === 0) return { label: 'Debole', color: 'bg-red-400', width: 'w-1/3' }
+    if (score === 1) return { label: 'Media', color: 'bg-yellow-400', width: 'w-2/3' }
+    return { label: 'Forte', color: 'bg-agri-green', width: 'w-full' }
+  }
+
+  const strength = getStrength()
+  if (!strength) return null
+
+  return (
+    <div className="mt-1">
+      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`} />
+      </div>
+      <p className={`text-xs mt-1 ${strength.color.replace('bg-', 'text-')}`}>{strength.label}</p>
+    </div>
+  )
+}
+
 export default function Register() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ nome: '', email: '', password: '', nomeAzienda: '' })
@@ -15,6 +42,11 @@ export default function Register() {
       if (!value.trim()) return 'Email obbligatoria'
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Formato email non valido'
     }
+    if (name === 'password') {
+      if (!value) return 'Password obbligatoria'
+      if (value.length < 8) return 'Minimo 8 caratteri'
+      if (value.length > 32) return 'Massimo 32 caratteri'
+    }
     return ''
   }
 
@@ -25,6 +57,7 @@ export default function Register() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Formato email non valido'
     if (!form.password) newErrors.password = 'Password obbligatoria'
     else if (form.password.length < 8) newErrors.password = 'Minimo 8 caratteri'
+    else if (form.password.length > 32) newErrors.password = 'Massimo 32 caratteri'
     return newErrors
   }
 
@@ -118,7 +151,8 @@ export default function Register() {
             <label className="text-sm font-medium text-gray-700 block mb-1">Password *</label>
             <input type="password" name="password" value={form.password}
               onChange={handleChange} onBlur={handleBlur}
-              placeholder="Minimo 8 caratteri" className={getFieldClass('password')} />
+              placeholder="8-32 caratteri" className={getFieldClass('password')} />
+            <PasswordStrength password={form.password} />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
           </div>
 
@@ -140,3 +174,4 @@ export default function Register() {
     </div>
   )
 }
+
