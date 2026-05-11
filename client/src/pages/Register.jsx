@@ -9,6 +9,14 @@ export default function Register() {
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const validateField = (name, value) => {
+    if (name === 'email') {
+      if (!value.trim()) return 'Email obbligatoria'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Formato email non valido'
+    }
+    return ''
+  }
+
   const validate = () => {
     const newErrors = {}
     if (!form.nome.trim()) newErrors.nome = 'Nome obbligatorio'
@@ -23,6 +31,12 @@ export default function Register() {
     setForm({ ...form, [e.target.name]: e.target.value })
     setErrors({ ...errors, [e.target.name]: '' })
     setServerError('')
+  }
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target
+    const error = validateField(name, value)
+    if (error) setErrors((prev) => ({ ...prev, [name]: error }))
   }
 
   const handleSubmit = async (e) => {
@@ -77,7 +91,8 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Nome *</label>
-            <input type="text" name="nome" value={form.nome} onChange={handleChange}
+            <input type="text" name="nome" value={form.nome}
+              onChange={handleChange} onBlur={handleBlur}
               placeholder="Mario Rossi"
               className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
             {errors.nome && <p className="text-red-500 text-xs mt-1">{errors.nome}</p>}
@@ -85,7 +100,8 @@ export default function Register() {
 
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Email *</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange}
+            <input type="email" name="email" value={form.email}
+              onChange={handleChange} onBlur={handleBlur}
               placeholder="mario@example.com"
               className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -93,7 +109,8 @@ export default function Register() {
 
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Password *</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange}
+            <input type="password" name="password" value={form.password}
+              onChange={handleChange} onBlur={handleBlur}
               placeholder="Minimo 8 caratteri"
               className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
@@ -103,7 +120,8 @@ export default function Register() {
             <label className="text-sm font-medium text-gray-700 block mb-1">
               Nome azienda <span className="text-gray-400">(facoltativo)</span>
             </label>
-            <input type="text" name="nomeAzienda" value={form.nomeAzienda} onChange={handleChange}
+            <input type="text" name="nomeAzienda" value={form.nomeAzienda}
+              onChange={handleChange}
               placeholder="Azienda Agricola Rossi"
               className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
           </div>
@@ -117,3 +135,4 @@ export default function Register() {
     </div>
   )
 }
+
