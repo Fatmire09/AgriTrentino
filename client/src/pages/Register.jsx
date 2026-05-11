@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 
 export default function Register() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({ nome: '', email: '', password: '', nomeAzienda: '' })
   const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const validate = () => {
     const newErrors = {}
@@ -19,14 +22,33 @@ export default function Register() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     setErrors({ ...errors, [e.target.name]: '' })
+    setServerError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = validate()
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
+
+    setLoading(true)
+    try {
+      const res = await fetch('http://localhost:3001/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          nome: form.nome,
+          nomeAzienda: form.nomeAzienda || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setServerError(data.error || 'Errore durante la registrazione'); return }
+      navigate('/?registered=true')
+    } catch {
+      setServerError('Impossibile contattare il server. Riprova più tardi.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -45,6 +67,12 @@ export default function Register() {
           Hai già un account?{' '}
           <Link to="/login" className="text-agri-green font-semibold hover:underline">Accedi</Link>
         </p>
+
+        {serverError && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">
+            {serverError}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
@@ -80,9 +108,9 @@ export default function Register() {
               className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
           </div>
 
-          <button type="submit"
-            className="w-full bg-agri-green text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition-colors mt-2">
-            Crea account
+          <button type="submit" disabled={loading}
+            className="w-full bg-agri-green text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition-colors mt-2 disabled:opacity-50">
+            {loading ? 'Creazione account...' : 'Crea account'}
           </button>
         </form>
       </div>
