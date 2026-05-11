@@ -6,6 +6,7 @@ export default function Register() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ nome: '', email: '', password: '', nomeAzienda: '' })
   const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -35,6 +36,7 @@ export default function Register() {
 
   const handleBlur = (e) => {
     const { name, value } = e.target
+    setTouched((prev) => ({ ...prev, [name]: true }))
     const error = validateField(name, value)
     if (error) setErrors((prev) => ({ ...prev, [name]: error }))
   }
@@ -66,6 +68,13 @@ export default function Register() {
     }
   }
 
+  const getFieldClass = (name) => {
+    const base = 'w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 '
+    if (!touched[name]) return base + 'focus:ring-agri-green'
+    if (errors[name]) return base + 'border-red-400 focus:ring-red-400'
+    return base + 'border-green-400 focus:ring-agri-green'
+  }
+
   return (
     <div className="min-h-screen bg-agri-beige flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-md w-full max-w-md p-8">
@@ -93,8 +102,7 @@ export default function Register() {
             <label className="text-sm font-medium text-gray-700 block mb-1">Nome *</label>
             <input type="text" name="nome" value={form.nome}
               onChange={handleChange} onBlur={handleBlur}
-              placeholder="Mario Rossi"
-              className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
+              placeholder="Mario Rossi" className={getFieldClass('nome')} />
             {errors.nome && <p className="text-red-500 text-xs mt-1">{errors.nome}</p>}
           </div>
 
@@ -102,8 +110,7 @@ export default function Register() {
             <label className="text-sm font-medium text-gray-700 block mb-1">Email *</label>
             <input type="email" name="email" value={form.email}
               onChange={handleChange} onBlur={handleBlur}
-              placeholder="mario@example.com"
-              className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
+              placeholder="mario@example.com" className={getFieldClass('email')} />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
 
@@ -111,8 +118,7 @@ export default function Register() {
             <label className="text-sm font-medium text-gray-700 block mb-1">Password *</label>
             <input type="password" name="password" value={form.password}
               onChange={handleChange} onBlur={handleBlur}
-              placeholder="Minimo 8 caratteri"
-              className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
+              placeholder="Minimo 8 caratteri" className={getFieldClass('password')} />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
           </div>
 
@@ -122,8 +128,7 @@ export default function Register() {
             </label>
             <input type="text" name="nomeAzienda" value={form.nomeAzienda}
               onChange={handleChange}
-              placeholder="Azienda Agricola Rossi"
-              className="w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-agri-green" />
+              placeholder="Azienda Agricola Rossi" className={getFieldClass('nomeAzienda')} />
           </div>
 
           <button type="submit" disabled={loading}
@@ -135,4 +140,3 @@ export default function Register() {
     </div>
   )
 }
-
