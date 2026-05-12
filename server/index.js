@@ -20,7 +20,7 @@ mongoose
   .catch(err => console.error('Errore connessione MongoDB:', err));
 
 app.listen(PORT, () => {
-  console.log(⁠ Server running on http://localhost:${PORT} ⁠);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
 
 module.exports = app;

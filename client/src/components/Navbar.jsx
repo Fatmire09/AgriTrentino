@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Menu, X, Leaf } from 'lucide-react'
 
 const navLinks = [
@@ -42,9 +43,12 @@ export default function Navbar() {
             <button className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition">
               Login
             </button>
-            <button className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition">
+            <Link
+              to="/register"
+              className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition text-center"
+            >
               Registrati
-            </button>
+            </Link>
           </div>
 
           {/* Mobile Hamburger */}
@@ -79,9 +83,12 @@ export default function Navbar() {
                 <button className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold">
                   Login
                 </button>
-                <button className="flex-1 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold">
+                <Link
+                  to="/register"
+                  className="flex-1 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold text-center"
+                >
                   Registrati
-                </button>
+                </Link>
               </div>
             </div>
           </div>
