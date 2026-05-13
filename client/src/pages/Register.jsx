@@ -92,7 +92,15 @@ export default function Register() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setServerError(data.error || 'Errore durante la registrazione'); return }
+      if (!res.ok) {
+        if (res.status === 409) {
+          setErrors((prev) => ({ ...prev, email: 'Email già registrata' }))
+          setTouched((prev) => ({ ...prev, email: true }))
+        } else {
+          setServerError(data.error || 'Errore durante la registrazione')
+        }
+        return
+      }
       navigate('/?registered=true')
     } catch {
       setServerError('Impossibile contattare il server. Riprova più tardi.')
@@ -100,7 +108,6 @@ export default function Register() {
       setLoading(false)
     }
   }
-
   const getFieldClass = (name) => {
     const base = 'w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 '
     if (!touched[name]) return base + 'focus:ring-agri-green'
