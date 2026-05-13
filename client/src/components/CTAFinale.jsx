@@ -1,6 +1,8 @@
 import { ArrowRight, Leaf } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function CTAFinale() {
+  const navigate = useNavigate()
   return (
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,7 +48,9 @@ export default function CTAFinale() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-10">
-            <button className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-white text-agri-green font-bold text-base hover:opacity-90 transition shadow-xl">
+            <button 
+              onClick={() => navigate('/register')}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-white text-agri-green font-bold text-base hover:opacity-90 transition shadow-xl">
               Registrati Gratuitamente
               <ArrowRight className="w-5 h-5" />
             </button>

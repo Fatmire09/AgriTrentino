@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const heroImages = [
   'https://images.unsplash.com/photo-1764590385577-18560eab8f7b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
@@ -9,6 +10,7 @@ const heroImages = [
 
 export default function Hero() {
   const [currentImage, setCurrentImage] = useState(0)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,7 +44,9 @@ export default function Hero() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-4 rounded-lg bg-agri-green text-white font-semibold text-base hover:opacity-90 transition shadow-lg hover:shadow-xl">
+              <button 
+                onClick={() => navigate('/register')}
+                className="px-8 py-4 rounded-lg bg-agri-green text-white font-semibold text-base hover:opacity-90 transition shadow-lg hover:shadow-xl">
                 Crea il tuo account
               </button>
             </div>
