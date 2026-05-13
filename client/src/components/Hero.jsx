@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 const heroImages = [
   'https://images.unsplash.com/photo-1764590385577-18560eab8f7b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
@@ -42,9 +43,9 @@ export default function Hero() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-4 rounded-lg bg-agri-green text-white font-semibold text-base hover:opacity-90 transition shadow-lg hover:shadow-xl">
+              <Link to="/register" className="px-8 py-4 rounded-lg bg-agri-green text-white font-semibold text-base hover:opacity-90 transition shadow-lg hover:shadow-xl inline-block text-center">
                 Crea il tuo account
-              </button>
+              </Link>
             </div>
           </div>
 
