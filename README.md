@@ -47,8 +47,9 @@ npm run dev          # http://localhost:3001
 
 ## Team
 
-- Ada Antico: adasofia.antico@studenti.unitn.it
+- Ada Sofia Antico: adasofia.antico@studenti.unitn.it
 - Fatmire Emush: fatmire.emush@studenti.unitn.it
+- Alessia Giunta: alessia.giunta@studenti.unitn.it
 
 ## Corso
 
