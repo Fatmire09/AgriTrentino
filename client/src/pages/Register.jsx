@@ -92,15 +92,7 @@ export default function Register() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        if (res.status === 409) {
-          setErrors((prev) => ({ ...prev, email: 'Email già registrata' }))
-          setTouched((prev) => ({ ...prev, email: true }))
-        } else {
-          setServerError(data.error || 'Errore durante la registrazione')
-        }
-        return
-      }
+      if (!res.ok) { setServerError(data.error || 'Errore durante la registrazione'); return }
       navigate('/?registered=true')
     } catch {
       setServerError('Impossibile contattare il server. Riprova più tardi.')
