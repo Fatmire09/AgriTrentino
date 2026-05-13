@@ -94,8 +94,9 @@ export default function Register() {
       const data = await res.json()
       if (!res.ok) {
         if (res.status === 409) {
-          setErrors((prev) => ({ ...prev, email: 'Email già registrata' }))
-          setTouched((prev) => ({ ...prev, email: true }))
+          const field = data.field || 'email'
+          setErrors((prev) => ({ ...prev, [field]: data.error }))
+          setTouched((prev) => ({ ...prev, [field]: true }))
         } else {
           setServerError(data.error || 'Errore durante la registrazione')
         }
@@ -170,6 +171,7 @@ export default function Register() {
             <input type="text" name="nomeAzienda" value={form.nomeAzienda}
               onChange={handleChange}
               placeholder="Azienda Agricola Rossi" className={getFieldClass('nomeAzienda')} />
+            {errors.nomeAzienda && <p className="text-red-500 text-xs mt-1">{errors.nomeAzienda}</p>}
           </div>
 
           <button type="submit" disabled={loading}

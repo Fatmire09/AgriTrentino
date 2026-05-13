@@ -35,7 +35,7 @@ router.post('/register', async (req, res) => {
     if (err.code === 11000) {
       const field = Object.keys(err.keyPattern)[0];
       const message = field === 'email' ? 'Email già registrata' : 'Nome azienda già in uso';
-      return res.status(409).json({ error: message });
+      return res.status(409).json({ error: message, field });
     }
     return res.status(500).json({ error: 'Errore interno del server' });
   }
