@@ -77,4 +77,7 @@ router.post('/login', async (req, res) => {
     return res.status(500).json({ error: 'Errore interno del server' });
   }
 });
+router.post('/logout', (req, res) => {
+  return res.status(200).json({ message: 'Logout effettuato con successo' });
+});
 module.exports = router;

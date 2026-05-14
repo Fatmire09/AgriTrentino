@@ -169,3 +169,20 @@ da utilizzare nelle chiamate autenticate successive (header `Authorization: Bear
     + Body
 
             { "error": "Errore interno del server" }
+
+## Logout [/api/v1/auth/logout]
+
+### Effettua logout [POST]
+
+Endpoint simbolico di conferma logout. Poiché l'autenticazione usa JWT stateless,
+l'invalidazione effettiva del token è responsabilità del client: dopo aver ricevuto
+200 OK, il client deve cancellare il token salvato in `localStorage`.
+
++ Request (application/json)
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "message": "Logout effettuato con successo" }
+            
