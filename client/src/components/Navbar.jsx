@@ -40,9 +40,12 @@ export default function Navbar() {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition">
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
+            >
               Login
-            </button>
+            </Link>
             <Link
               to="/register"
               className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition text-center"
@@ -80,9 +83,12 @@ export default function Navbar() {
                 </a>
               ))}
               <div className="flex gap-3 mt-2">
-                <button className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold">
+                <Link
+                  to="/login"
+                  className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold text-center"
+                >
                   Login
-                </button>
+                </Link>
                 <Link
                   to="/register"
                   className="flex-1 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold text-center"
