@@ -6,6 +6,7 @@ import ComeFunziona from './components/ComeFunziona'
 import CTAFinale from './components/CTAFinale'
 import Footer from './components/Footer'
 import Register from './pages/Register'
+import Login from './pages/Login'
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           </div>
         } />
         <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </BrowserRouter>
   )
