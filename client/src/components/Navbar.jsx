@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, Leaf } from 'lucide-react'
 
 const navLinks = [
@@ -10,6 +10,24 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('token'))
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:3001/api/v1/auth/logout', { method: 'POST' })
+    } catch {
+      // anche se il server non risponde, eseguiamo comunque il logout client-side
+    }
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setIsLoggedIn(false)
+    navigate('/')
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
@@ -40,18 +58,29 @@ export default function Navbar() {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              to="/login"
-              className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition text-center"
-            >
-              Registrati
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition text-center"
+                >
+                  Registrati
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Hamburger */}
@@ -83,18 +112,29 @@ export default function Navbar() {
                 </a>
               ))}
               <div className="flex gap-3 mt-2">
-                <Link
-                  to="/login"
-                  className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold text-center"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="flex-1 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold text-center"
-                >
-                  Registrati
-                </Link>
+                {isLoggedIn ? (
+                  <button
+                    onClick={handleLogout}
+                    className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold text-center"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="flex-1 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold text-center"
+                    >
+                      Registrati
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
