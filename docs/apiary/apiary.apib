@@ -116,3 +116,56 @@ unicità email e nomeAzienda. La password viene cifrata prima del salvataggio.
     + Body
 
             { "error": "Errore interno del server" }
+## Login [/api/v1/auth/login]
+
+### Effettua login [POST]
+
+Autentica un utente esistente verificando email e password. Restituisce un token JWT
+da utilizzare nelle chiamate autenticate successive (header `Authorization: Bearer <token>`).
+
++ Request (application/json)
+
+    + Body
+
+            {
+                "email": "mario.rossi@example.com",
+                "password": "Password123"
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Login effettuato con successo",
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "user": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d0e",
+                    "email": "mario.rossi@example.com",
+                    "nome": "Mario Rossi",
+                    "nomeAzienda": "Azienda Agricola Rossi"
+                }
+            }
+
++ Response 400 (application/json)
+
+    Email o password mancanti.
+
+    + Body
+
+            { "error": "Email e password sono obbligatorie" }
+
++ Response 401 (application/json)
+
+    Credenziali non valide (email non esistente o password errata). 
+    Il messaggio è volutamente generico per non rivelare quale dei due campi è errato.
+
+    + Body
+
+            { "error": "Credenziali non valide" }
+
++ Response 500 (application/json)
+
+    + Body
+
+            { "error": "Errore interno del server" }
