@@ -59,13 +59,21 @@ export default function Navbar() {
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition"
-              >
-                Logout
-              </button>
-            ) : (
+  <>
+    <Link
+      to="/profile"
+      className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
+    >
+      Profilo
+    </Link>
+    <button
+      onClick={handleLogout}
+      className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition"
+    >
+      Logout
+    </button>
+  </>
+) : (
               <>
                 <Link
                   to="/login"
@@ -113,12 +121,20 @@ export default function Navbar() {
               ))}
               <div className="flex gap-3 mt-2">
                 {isLoggedIn ? (
-                  <button
-                    onClick={handleLogout}
-                    className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold"
-                  >
-                    Logout
-                  </button>
+                  <>
+                    <Link
+                      to="/profile"
+                      className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold text-center"
+                    >
+                      Profilo
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex-1 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold"
+                    >
+                      Logout
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link
