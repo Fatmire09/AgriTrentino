@@ -9,6 +9,7 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
 import EditProfile from './pages/EditProfile'
+import ChangePassword from './pages/ChangePassword'
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<EditProfile />} />
+	<Route path="/profile/change-password" element={<ChangePassword />} />
       </Routes>
     </BrowserRouter>
   )
