@@ -84,6 +84,9 @@ export default function Profile() {
             ← Torna alla home
           </Link>
           <div className="flex gap-3">
+            <Link to="/fields/new" className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition">
+              + Aggiungi appezzamento
+            </Link>
             <Link to="/profile/change-password" className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition">
               Cambia password
             </Link>
