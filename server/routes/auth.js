@@ -92,4 +92,50 @@ router.get('/me', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Errore interno del server' });
   }
 });
+router.patch('/me', requireAuth, async (req, res) => {
+  const { nome, email, nomeAzienda } = req.body;
+  const updates = {};
+
+  if (nome !== undefined) {
+    if (!nome.trim()) return res.status(400).json({ error: 'Nome non può essere vuoto' });
+    updates.nome = nome.trim();
+  }
+
+  if (email !== undefined) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return res.status(400).json({ error: 'Formato email non valido' });
+    updates.email = email.toLowerCase().trim();
+  }
+
+  if (nomeAzienda !== undefined) {
+    updates.nomeAzienda = nomeAzienda.trim() || undefined;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ error: 'Nessun campo da aggiornare' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(req.userId, updates, {
+      new: true,
+      runValidators: true,
+    }).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+
+    return res.status(200).json({
+      message: 'Profilo aggiornato con successo',
+      user,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      const message = field === 'email' ? 'Email già registrata' : 'Nome azienda già in uso';
+      return res.status(409).json({ error: message, field });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
 module.exports = router;
