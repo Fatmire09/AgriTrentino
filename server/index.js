@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
+const fieldsRouter = require('./routes/fields');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,6 +14,7 @@ app.use(express.json());
 
 app.use('/', indexRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/fields', fieldsRouter);
 
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
