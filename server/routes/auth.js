@@ -1,3 +1,4 @@
+const requireAuth = require('../middleware/auth');
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
@@ -79,5 +80,16 @@ router.post('/login', async (req, res) => {
 });
 router.post('/logout', (req, res) => {
   return res.status(200).json({ message: 'Logout effettuato con successo' });
+});
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+    return res.status(200).json({ user });
+  } catch (err) {
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
 });
 module.exports = router;

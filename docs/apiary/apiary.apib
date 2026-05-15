@@ -185,4 +185,44 @@ l'invalidazione effettiva del token è responsabilità del client: dopo aver ric
     + Body
 
             { "message": "Logout effettuato con successo" }
-            
+## Profilo utente corrente [/api/v1/auth/me]
+
+### Recupera dati utente loggato [GET]
+
+Endpoint protetto. Richiede header `Authorization: Bearer <token>` con un JWT valido
+(ottenuto via POST /login). Restituisce i dati dell'utente associato al token.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "user": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d0e",
+                    "email": "mario.rossi@example.com",
+                    "nome": "Mario Rossi",
+                    "nomeAzienda": "Azienda Agricola Rossi",
+                    "createdAt": "2026-05-13T13:27:28.636Z",
+                    "updatedAt": "2026-05-13T13:27:28.636Z"
+                }
+            }
+
++ Response 401 (application/json)
+
+    Token mancante, non valido o scaduto.
+
+    + Body
+
+            { "error": "Token non valido o scaduto" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Utente non trovato" }            
