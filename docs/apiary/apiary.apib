@@ -324,3 +324,76 @@ La nuova password viene hashata con bcrypt prima del salvataggio.
     + Body
 
             { "error": "Utente non trovato" }
+
+# Group Appezzamenti
+
+Endpoint per la gestione degli appezzamenti agricoli dell'utente loggato.
+Tutti gli endpoint richiedono autenticazione tramite header `Authorization: Bearer <token>`.
+
+## Lista appezzamenti [/api/v1/fields]
+
+### Crea nuovo appezzamento [POST]
+
+Crea un nuovo appezzamento associato all'utente autenticato. I campi `nome`,
+`latitudine`, `longitudine` e `superficie` sono obbligatori. Il sistema imposta
+automaticamente `ownerId` dal token JWT.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "nome": "Vigneto Cembra",
+                "latitudine": 46.183,
+                "longitudine": 11.213,
+                "superficie": 5200,
+                "pendenza": 15,
+                "coltura": "vite",
+                "esposizione": "Sud-Est"
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "message": "Appezzamento creato con successo",
+                "field": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d0f",
+                    "nome": "Vigneto Cembra",
+                    "latitudine": 46.183,
+                    "longitudine": 11.213,
+                    "superficie": 5200,
+                    "pendenza": 15,
+                    "coltura": "vite",
+                    "esposizione": "Sud-Est",
+                    "ownerId": "664a1b2c3d4e5f6a7b8c9d0e",
+                    "createdAt": "2026-05-15T10:30:00.000Z",
+                    "updatedAt": "2026-05-15T10:30:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    Campi obbligatori mancanti o validazione fallita (latitudine fuori [-90, 90],
+    longitudine fuori [-180, 180], superficie ≤ 0, pendenza fuori [0, 100]).
+
+    + Body
+
+            { "error": "Latitudine deve essere compresa tra -90 e 90" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token non valido o scaduto" }
+
++ Response 500 (application/json)
+
+    + Body
+
+            { "error": "Errore interno del server" }
