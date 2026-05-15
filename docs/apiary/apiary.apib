@@ -276,3 +276,51 @@ I campi non inclusi nel body restano invariati.
     + Body
 
             { "error": "Email già registrata", "field": "email" }
+
+## Cambio password [/api/v1/auth/change-password]
+
+### Cambia password utente [POST]
+
+Endpoint protetto. Verifica la password corrente e la sostituisce con quella nuova.
+La nuova password viene hashata con bcrypt prima del salvataggio.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "currentPassword": "VecchiaPassword123",
+                "newPassword": "NuovaPassword456"
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "message": "Password aggiornata con successo" }
+
++ Response 400 (application/json)
+
+    Campi mancanti, password troppo corta/lunga, o nuova uguale alla corrente.
+
+    + Body
+
+            { "error": "La nuova password deve essere di almeno 8 caratteri" }
+
++ Response 401 (application/json)
+
+    Token mancante/non valido, oppure password corrente non corretta.
+
+    + Body
+
+            { "error": "Password corrente non corretta" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Utente non trovato" }
