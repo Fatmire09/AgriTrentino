@@ -138,4 +138,42 @@ router.patch('/me', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Errore interno del server' });
   }
 });
+router.post('/change-password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Password corrente e nuova sono obbligatorie' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'La nuova password deve essere di almeno 8 caratteri' });
+  }
+
+  if (newPassword.length > 32) {
+    return res.status(400).json({ error: 'La nuova password non può superare 32 caratteri' });
+  }
+
+  if (currentPassword === newPassword) {
+    return res.status(400).json({ error: 'La nuova password deve essere diversa da quella corrente' });
+  }
+
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Password corrente non corretta' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password aggiornata con successo' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
 module.exports = router;
