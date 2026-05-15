@@ -79,13 +79,18 @@ export default function Profile() {
           <Row icon={<Calendar className="w-5 h-5" />} label="Registrato il" value={formatDate(user.createdAt)} />
         </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
+        <div className="mt-8 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
           <Link to="/" className="text-agri-green font-semibold hover:underline text-sm">
             ← Torna alla home
           </Link>
-          <Link to="/profile/edit" className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition">
-            Modifica dati
-          </Link>
+          <div className="flex gap-3">
+            <Link to="/profile/change-password" className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition">
+              Cambia password
+            </Link>
+            <Link to="/profile/edit" className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition">
+              Modifica dati
+            </Link>
+          </div>
         </div>
       </div>
     </div>
