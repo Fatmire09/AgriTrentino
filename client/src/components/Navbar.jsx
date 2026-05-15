@@ -61,6 +61,12 @@ export default function Navbar() {
             {isLoggedIn ? (
   <>
     <Link
+      to="/fields"
+      className="px-4 py-2 rounded-lg text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
+    >
+      I miei campi
+    </Link>
+    <Link
       to="/profile"
       className="px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
     >
@@ -122,6 +128,12 @@ export default function Navbar() {
               <div className="flex gap-3 mt-2">
                 {isLoggedIn ? (
                   <>
+                    <Link
+                      to="/fields"
+                      className="flex-1 py-2 rounded-lg text-agri-green text-sm font-semibold text-center"
+                    >
+                      I miei campi
+                    </Link>
                     <Link
                       to="/profile"
                       className="flex-1 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold text-center"
