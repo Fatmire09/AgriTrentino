@@ -332,6 +332,51 @@ Tutti gli endpoint richiedono autenticazione tramite header `Authorization: Bear
 
 ## Lista appezzamenti [/api/v1/fields]
 
+### Recupera lista appezzamenti dell'utente [GET]
+
+Endpoint protetto. Restituisce solo gli appezzamenti dell'utente autenticato
+(filtrati per `ownerId`), ordinati dal più recente.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "fields": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d0f",
+                        "nome": "Vigneto Cembra",
+                        "latitudine": 46.183,
+                        "longitudine": 11.213,
+                        "superficie": 5200,
+                        "pendenza": 15,
+                        "coltura": "vite",
+                        "esposizione": "Sud-Est",
+                        "ownerId": "664a1b2c3d4e5f6a7b8c9d0e",
+                        "createdAt": "2026-05-15T10:30:00.000Z",
+                        "updatedAt": "2026-05-15T10:30:00.000Z"
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token non valido o scaduto" }
+
++ Response 500 (application/json)
+
+    + Body
+
+            { "error": "Errore interno del server" }
+
 ### Crea nuovo appezzamento [POST]
 
 Crea un nuovo appezzamento associato all'utente autenticato. I campi `nome`,

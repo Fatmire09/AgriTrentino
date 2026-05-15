@@ -3,6 +3,15 @@ const router = express.Router();
 const Field = require('../models/Field');
 const requireAuth = require('../middleware/auth');
 
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const fields = await Field.find({ ownerId: req.userId }).sort({ createdAt: -1 });
+    return res.status(200).json({ fields });
+  } catch (err) {
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 router.post('/', requireAuth, async (req, res) => {
   const { nome, latitudine, longitudine, superficie, pendenza, coltura, esposizione } = req.body;
 
