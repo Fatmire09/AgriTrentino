@@ -16,33 +16,64 @@ Il sistema sposta la gestione agricola da una logica **reattiva** a una logica *
 
 ## Stack tecnologico
 
-| Layer    | Tecnologia                          |
-|----------|-------------------------------------|
-| Frontend | React 18, Vite, Tailwind CSS v3     |
-| Backend  | Node.js, Express, MongoDB (Mongoose)|
-| Docs API | Apiary (API Blueprint)              |
+| Layer       | Tecnologia                                  |
+|-------------|---------------------------------------------|
+| Frontend    | React 18, Vite, Tailwind CSS, React Router  |
+| Backend     | Node.js, Express, MongoDB (Mongoose)        |
+| Auth        | JWT (jsonwebtoken), bcrypt                  |
+| Docs API    | Apiary (API Blueprint)                      |
 
 ## Struttura del progetto
 
 ```
 AgriTrentino/
-├── client/          # Frontend React
-├── server/          # Backend Express
-└── docs/            # Documentazione API
+├── client/                    
+│   └── src/
+│       ├── pages/             
+│       └── components/        
+├── server/                   
+│   ├── models/                
+│   ├── routes/                
+│   └── middleware/          
+└── docs/
+    ├── apiary/                
+    └── testing/               
 ```
+
+## Stato attuale (Sprint #1 completato)
+
+- Landing page informativa
+- Registrazione, login, logout (JWT)
+- Visualizzazione, modifica profilo e cambio password
+- Aggiunta e lista appezzamenti
 
 ## Avvio in locale
 
-```bash
-# Frontend
-cd client
-npm install
-npm run dev          # http://localhost:5173
+### Prerequisiti
+- Node.js ≥ 18
+- MongoDB attivo in locale (o stringa MongoDB Atlas)
 
-# Backend
+### Configurazione
+Crea un file `server/.env` con:
+```
+MONGODB_URI=mongodb://localhost:27017/agritrentino
+JWT_SECRET=una-stringa-segreta-qualsiasi
+PORT=3001
+
+```
+
+### Setup
+\`\`\`bash
+# Backend (avvia prima!)
 cd server
 npm install
 npm run dev          # http://localhost:3001
+
+# Frontend (in un altro terminale)
+cd client
+npm install
+npm run dev          # http://localhost:5173
+\`\`\`
 ```
 
 ## Team
