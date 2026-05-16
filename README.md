@@ -63,17 +63,17 @@ PORT=3001
 ```
 
 ### Setup
-\`\`\`bash
-# Backend (avvia prima!)
+\```bash
+
+### Backend (avvia prima!)
 cd server
 npm install
 npm run dev          # http://localhost:3001
 
-# Frontend (in un altro terminale)
+### Frontend (in un altro terminale)
 cd client
 npm install
 npm run dev          # http://localhost:5173
-\`\`\`
 ```
 
 ## Team
