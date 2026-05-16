@@ -63,7 +63,7 @@ PORT=3001
 ```
 
 ### Setup
-\```bash
+```bash
 
 ### Backend (avvia prima!)
 cd server
