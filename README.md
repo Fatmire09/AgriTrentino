@@ -53,4 +53,4 @@ npm run dev          # http://localhost:3001
 
 ## Corso
 
-Ingegneria del Software — Università di Trento, A.A. 2025/2026
+Ingegneria del Software: Università di Trento, A.A. 2025/2026
