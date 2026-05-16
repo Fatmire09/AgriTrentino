@@ -65,7 +65,7 @@ PORT=3001
 ### Setup
 ```bash
 
-# Backend (avvia prima!)
+# Backend (avvia per prima)
 cd server
 npm install
 npm run dev          # http://localhost:3001
