@@ -10,9 +10,9 @@ Il sistema sposta la gestione agricola da una logica **reattiva** a una logica *
 
 ## Funzionalità principali
 
-- **Indici di rischio personalizzati** — scala cromatica semaforica basata su dati meteo in tempo reale e profilo dell'appezzamento
-- **Modulo di simulazione** — scenari ipotetici per pianificare interventi in anticipo
-- **Monitoraggio della sostenibilità** — registro digitale degli interventi con feedback sull'efficienza decisionale
+- **Indici di rischio personalizzati**: scala cromatica semaforica basata su dati meteo in tempo reale e profilo dell'appezzamento
+- **Modulo di simulazione**: scenari ipotetici per pianificare interventi in anticipo
+- **Monitoraggio della sostenibilità**: registro digitale degli interventi con feedback sull'efficienza decisionale
 
 ## Stack tecnologico
 
