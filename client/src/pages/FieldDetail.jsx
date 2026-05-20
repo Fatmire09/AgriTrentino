@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2 } from 'lucide-react'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function FieldDetail() {
   const { id } = useParams()
@@ -8,6 +9,8 @@ export default function FieldDetail() {
   const [field, setField] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -46,6 +49,29 @@ export default function FieldDetail() {
       .finally(() => setLoading(false))
   }, [id, navigate])
 
+  const handleDelete = async () => {
+    const token = localStorage.getItem('token')
+    setDeleting(true)
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        navigate('/fields')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Errore durante l\'eliminazione')
+        setConfirmOpen(false)
+      }
+    } catch {
+      setError('Impossibile contattare il server')
+      setConfirmOpen(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-agri-beige flex items-center justify-center pt-16">
@@ -80,12 +106,20 @@ export default function FieldDetail() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h1 className="font-poppins font-bold text-3xl break-words">{field.nome}</h1>
-          <Link
-            to={`/fields/${field._id}/edit`}
-            className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition inline-flex items-center gap-2"
-          >
-            <Pencil className="w-4 h-4" /> Modifica
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              to={`/fields/${field._id}/edit`}
+              className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition inline-flex items-center gap-2"
+            >
+              <Pencil className="w-4 h-4" /> Modifica
+            </Link>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              className="px-4 py-2 rounded-lg border-2 border-red-500 text-red-600 text-sm font-semibold hover:bg-red-50 transition inline-flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" /> Elimina
+            </button>
+          </div>
         </div>
 
         {/* Dati anagrafici */}
@@ -144,6 +178,17 @@ export default function FieldDetail() {
           </h2>
           <p className="text-sm text-gray-500">Disponibili dopo US42-US47 (registro interventi).</p>
         </section>
+
+        <ConfirmDialog
+          open={confirmOpen}
+          title="Eliminare questo appezzamento?"
+          message={`Stai per eliminare "${field.nome}" in modo definitivo.\n\nVerranno persi anche tutti i dati associati (storico colture, indici, interventi futuri). Questa azione non può essere annullata.`}
+          confirmLabel={deleting ? 'Eliminazione...' : 'Sì, elimina'}
+          cancelLabel="Annulla"
+          destructive
+          onConfirm={handleDelete}
+          onCancel={() => !deleting && setConfirmOpen(false)}
+        />
       </div>
     </div>
   )
