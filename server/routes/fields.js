@@ -70,4 +70,53 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
+// US19: PATCH /api/v1/fields/:id — modifica appezzamento esistente
+router.patch('/:id', requireAuth, async (req, res) => {
+  const { nome, latitudine, longitudine, superficie, pendenza, coltura, esposizione } = req.body;
+  const updates = {};
+
+  if (nome !== undefined) {
+    if (!nome.trim()) return res.status(400).json({ error: 'Il nome non può essere vuoto' });
+    updates.nome = nome.trim();
+  }
+  if (latitudine !== undefined) updates.latitudine = latitudine;
+  if (longitudine !== undefined) updates.longitudine = longitudine;
+  if (superficie !== undefined) updates.superficie = superficie;
+  if (pendenza !== undefined) updates.pendenza = pendenza;
+  if (coltura !== undefined) updates.coltura = coltura;
+  if (esposizione !== undefined) updates.esposizione = esposizione;
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ error: 'Nessun campo da aggiornare' });
+  }
+
+  try {
+    const field = await Field.findById(req.params.id);
+    if (!field) {
+      return res.status(404).json({ error: 'Appezzamento non trovato' });
+    }
+    if (field.ownerId.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+
+    // Applica gli aggiornamenti e salva (fa scattare le validazioni Mongoose)
+    Object.assign(field, updates);
+    await field.save();
+
+    return res.status(200).json({
+      message: 'Appezzamento aggiornato con successo',
+      field,
+    });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    if (err.name === 'ValidationError') {
+      const messaggio = Object.values(err.errors)[0].message;
+      return res.status(400).json({ error: `Validazione fallita: ${messaggio}` });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
