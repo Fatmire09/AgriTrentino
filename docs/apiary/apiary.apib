@@ -500,3 +500,48 @@ L'utente può accedere solo ai propri appezzamenti (controllo `ownerId === req.u
     + Body
 
             { "error": "Appezzamento non trovato" }
+
+### Aggiorna appezzamento [PATCH]
+Aggiorna parzialmente un appezzamento. Richiede autenticazione JWT.
+L'utente può modificare solo i propri appezzamenti (controllo `ownerId === req.userId`).
+Tutti i campi nel body sono opzionali; vengono aggiornati solo quelli presenti.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "nome": "Vigneto Pergine - aggiornato",
+                "pendenza": 25,
+                "coltura": "Vite",
+                "esposizione": "Sud-Ovest"
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "message": "Appezzamento aggiornato con successo",
+                "field": {
+                    "_id": "683abc123def456789",
+                    "nome": "Vigneto Pergine - aggiornato",
+                    "latitudine": 46.07,
+                    "longitudine": 11.12,
+                    "superficie": 2.5,
+                    "pendenza": 25,
+                    "coltura": "Vite",
+                    "esposizione": "Sud-Ovest",
+                    "ownerId": "683user000111222",
+                    "createdAt": "2026-05-13T10:00:00.000Z",
+                    "updatedAt": "2026-05-21T09:15:00.000Z"
+                }
+            }
++ Response 400 (application/json)
+    + Body
+            { "error": "Validazione fallita: la pendenza deve essere tra 0 e 100" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
