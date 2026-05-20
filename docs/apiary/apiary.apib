@@ -422,8 +422,6 @@ automaticamente `ownerId` dal token JWT.
                 }
             }
 
-+ Response 400 (application/json)
-
     Campi obbligatori mancanti o validazione fallita (latitudine fuori [-90, 90],
     longitudine fuori [-180, 180], superficie ≤ 0, pendenza fuori [0, 100]).
 
@@ -442,3 +440,63 @@ automaticamente `ownerId` dal token JWT.
     + Body
 
             { "error": "Errore interno del server" }
+
+## Dettaglio appezzamento [/api/v1/fields/{id}]
+
++ Parameters
+    + id: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Recupera dettagli appezzamento [GET]
+
+Restituisce i dettagli completi di un singolo appezzamento. Richiede autenticazione tramite JWT.
+L'utente può accedere solo ai propri appezzamenti (controllo `ownerId === req.userId`).
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "field": {
+                    "_id": "683abc123def456789",
+                    "nome": "Campo Nord",
+                    "latitudine": 46.07,
+                    "longitudine": 11.12,
+                    "superficie": 2.5,
+                    "pendenza": 5,
+                    "coltura": "Vite",
+                    "esposizione": "Sud",
+                    "ownerId": "683user000111222",
+                    "createdAt": "2026-05-13T10:00:00.000Z",
+                    "updatedAt": "2026-05-13T10:00:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "ID non valido" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
