@@ -12,6 +12,8 @@ import EditProfile from './pages/EditProfile'
 import ChangePassword from './pages/ChangePassword'
 import AddField from './pages/AddField'
 import FieldsList from './pages/FieldsList'
+import FieldDetail from './pages/FieldDetail'
+
 
 export default function App() {
   return (
@@ -35,6 +37,7 @@ export default function App() {
         <Route path="/profile/edit" element={<EditProfile />} />
         <Route path="/profile/change-password" element={<ChangePassword />} />
         <Route path="/fields" element={<FieldsList />} />
+        <Route path="/fields/:id" element={<FieldDetail />} />
 	<Route path="/fields/new" element={<AddField />} />
 	
 
