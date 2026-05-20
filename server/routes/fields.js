@@ -47,4 +47,27 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// US18: GET /api/v1/fields/:id — dettaglio singolo appezzamento
+router.get('/:id', requireAuth, async (req, res) => {
+  try {
+    const field = await Field.findById(req.params.id);
+
+    if (!field) {
+      return res.status(404).json({ error: 'Appezzamento non trovato' });
+    }
+
+    // Solo il proprietario può vedere il proprio appezzamento
+    if (field.ownerId.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+
+    return res.status(200).json({ field });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
