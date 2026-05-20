@@ -545,3 +545,28 @@ Tutti i campi nel body sono opzionali; vengono aggiornati solo quelli presenti.
 + Response 404 (application/json)
     + Body
             { "error": "Appezzamento non trovato" }
+
+### Elimina appezzamento [DELETE]
+Elimina definitivamente un appezzamento e tutti i dati associati (storico colture, indici, interventi futuri).
+L'operazione è irreversibile. Richiede autenticazione JWT.
+L'utente può eliminare solo i propri appezzamenti (controllo `ownerId === req.userId`).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "message": "Appezzamento eliminato con successo"
+            }
++ Response 400 (application/json)
+    + Body
+            { "error": "ID non valido" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
