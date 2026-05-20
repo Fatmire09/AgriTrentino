@@ -119,4 +119,28 @@ router.patch('/:id', requireAuth, async (req, res) => {
   }
 });
 
+// US20: DELETE /api/v1/fields/:id — elimina appezzamento
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    const field = await Field.findById(req.params.id);
+
+    if (!field) {
+      return res.status(404).json({ error: 'Appezzamento non trovato' });
+    }
+
+    if (field.ownerId.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+
+    await Field.deleteOne({ _id: field._id });
+
+    return res.status(200).json({ message: 'Appezzamento eliminato con successo' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
