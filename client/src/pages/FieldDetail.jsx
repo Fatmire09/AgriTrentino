@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil } from 'lucide-react'
 
 export default function FieldDetail() {
   const { id } = useParams()
@@ -78,7 +78,15 @@ export default function FieldDetail() {
           <ArrowLeft className="w-4 h-4" /> Tutti i campi
         </Link>
 
-        <h1 className="font-poppins font-bold text-3xl mb-6 break-words">{field.nome}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <h1 className="font-poppins font-bold text-3xl break-words">{field.nome}</h1>
+          <Link
+            to={`/fields/${field._id}/edit`}
+            className="px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition inline-flex items-center gap-2"
+          >
+            <Pencil className="w-4 h-4" /> Modifica
+          </Link>
+        </div>
 
         {/* Dati anagrafici */}
         <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
