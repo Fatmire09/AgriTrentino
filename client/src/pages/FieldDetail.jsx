@@ -40,6 +40,10 @@ export default function FieldDetail() {
   const [newFase, setNewFase] = useState('')
   const [savingColtura, setSavingColtura] = useState(false)
   const [colturaError, setColturaError] = useState('')
+  const [showUpdateFase, setShowUpdateFase] = useState(false)
+  const [updatedFase, setUpdatedFase] = useState('')
+  const [updatingFase, setUpdatingFase] = useState(false)
+  const [updateFaseError, setUpdateFaseError] = useState('')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -118,6 +122,37 @@ export default function FieldDetail() {
       setColturaError('Impossibile contattare il server')
     } finally {
       setSavingColtura(false)
+    }
+  }
+
+  const handleUpdateFase = async () => {
+    if (!updatedFase) {
+      setUpdateFaseError('Seleziona una fase fenologica')
+      return
+    }
+    setUpdatingFase(true)
+    setUpdateFaseError('')
+    const token = localStorage.getItem('token')
+    const colturaId = colture[0]._id
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/colture/${colturaId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ fase: updatedFase }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        // Sostituisce la coltura corrente con quella aggiornata
+        setColture((prev) => [data.coltura, ...prev.slice(1)])
+        setShowUpdateFase(false)
+        setUpdatedFase('')
+      } else {
+        setUpdateFaseError(data.error || 'Errore durante l\'aggiornamento')
+      }
+    } catch {
+      setUpdateFaseError('Impossibile contattare il server')
+    } finally {
+      setUpdatingFase(false)
     }
   }
 
@@ -278,9 +313,59 @@ export default function FieldDetail() {
                     <span className="font-medium">Fase fenologica:</span> {ETICHETTE_FASI[colture[0].fase] || colture[0].fase}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Aggiornata il {new Date(colture[0].dataAggiornamento).toLocaleDateString('it-IT')}
-                </p>
+                <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
+                  <p className="text-xs text-gray-500">
+                    Aggiornata il {new Date(colture[0].dataAggiornamento).toLocaleDateString('it-IT')}
+                  </p>
+                  {!showUpdateFase && !showAddColtura && (
+                    <button
+                      onClick={() => {
+                        setShowUpdateFase(true)
+                        setUpdatedFase(colture[0].fase || '')
+                        setUpdateFaseError('')
+                      }}
+                      className="text-xs text-agri-green font-semibold hover:underline"
+                    >
+                      Aggiorna fase fenologica
+                    </button>
+                  )}
+                </div>
+
+                {showUpdateFase && (
+                  <div className="mt-3 p-3 bg-white rounded-lg border border-agri-green space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Nuova fase fenologica</label>
+                    <select
+                      value={updatedFase}
+                      onChange={(e) => setUpdatedFase(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-agri-green"
+                      disabled={updatingFase}
+                    >
+                      <option value="">— Seleziona fase —</option>
+                      {(FASI_PER_TIPOLOGIA[colture[0].tipologia] || []).map((f) => (
+                        <option key={f} value={f}>{ETICHETTE_FASI[f] || f}</option>
+                      ))}
+                    </select>
+
+                    {updateFaseError && <p className="text-red-600 text-sm">{updateFaseError}</p>}
+
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => { setShowUpdateFase(false); setUpdateFaseError('') }}
+                        disabled={updatingFase}
+                        className="px-3 py-1.5 rounded-lg border-2 border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-100 transition"
+                      >
+                        Annulla
+                      </button>
+                      <button
+                        onClick={handleUpdateFase}
+                        disabled={updatingFase}
+                        className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                      >
+                        {updatingFase ? 'Aggiornamento...' : 'Conferma'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               {colture.length > 1 && (
                 <details className="text-sm">
