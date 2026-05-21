@@ -632,8 +632,12 @@ La prima della lista è la coltura corrente.
 
 ### Aggiungi coltura all'appezzamento [POST]
 
+
 Crea una nuova coltura per l'appezzamento. Diventa la nuova coltura corrente (la più recente).
 Le precedenti restano in storico.
+Il campo `varieta` è opzionale ma se presente deve essere coerente con la `tipologia`:
+- **Vite**: Chardonnay, Pinot Nero, Müller-Thurgau, Teroldego, Marzemino
+Altre tipologie e varietà saranno introdotte negli sprint futuri (Melo, Piccoli Frutti).
 
 + Request (application/json)
 
@@ -642,9 +646,10 @@ Le precedenti restano in storico.
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
     + Body
-
             {
-                "tipologia": "Vite"
+                "tipologia": "Vite",
+                "varieta": "Chardonnay"
+            }
             }
 
 + Response 201 (application/json)
@@ -657,7 +662,7 @@ Le precedenti restano in storico.
                     "_id": "664a1b2c3d4e5f6a7b8c9d10",
                     "appezzamentoId": "683abc123def456789",
                     "tipologia": "Vite",
-                    "varieta": null,
+                    "varieta": "Chardonnay",
                     "fase": null,
                     "dataAggiornamento": "2026-05-21T09:00:00.000Z",
                     "createdAt": "2026-05-21T09:00:00.000Z",
@@ -671,9 +676,9 @@ Le precedenti restano in storico.
 
             { "error": "Validazione fallita: tipologia deve essere una tra: Vite" }
 
-+ Response 401 (application/json)
-
++ Response 400 (application/json)
     + Body
+            { "error": "Validazione fallita: varieta 'Sangiovese' non valida per tipologia 'Vite'. Varietà ammesse: Chardonnay, Pinot Nero, Müller-Thurgau, Teroldego, Marzemino" }
 
             { "error": "Token mancante" }
 
