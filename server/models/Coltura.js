@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { TIPOLOGIE_COLTURA } = require('../constants/colture');
+const { TIPOLOGIE_COLTURA, VARIETA_PER_TIPOLOGIA } = require('../constants/colture');
 
 // Modello Coltura (US21, US22, US23)
 // Riferimento UML D2: classe Coltura aggregata a Appezzamento
@@ -24,7 +24,19 @@ const colturaSchema = new mongoose.Schema(
     varieta: {
       type: String,
       default: null,
-      // US22 introdurrà la validazione enum collegata a tipologia
+      validate: {
+        validator: function (valore) {
+          // null/undefined sono ammessi (varietà non specificata)
+          if (valore === null || valore === undefined || valore === '') return true;
+          // se valorizzata, deve essere coerente con la tipologia
+          const ammesse = VARIETA_PER_TIPOLOGIA[this.tipologia] || [];
+          return ammesse.includes(valore);
+        },
+        message: function (props) {
+          const ammesse = VARIETA_PER_TIPOLOGIA[this.tipologia] || [];
+          return `varieta '${props.value}' non valida per tipologia '${this.tipologia}'. Varietà ammesse: ${ammesse.join(', ')}`;
+        },
+      },
     },
     fase: {
       type: String,
