@@ -570,3 +570,121 @@ L'utente può eliminare solo i propri appezzamenti (controllo `ownerId === req.u
 + Response 404 (application/json)
     + Body
             { "error": "Appezzamento non trovato" }
+
+# Group Colture
+
+Endpoint per la gestione delle colture associate a un appezzamento.
+Ogni appezzamento può avere più colture nel tempo (storico); l'attuale è la più recente.
+Tutti gli endpoint richiedono autenticazione e accesso solo al proprio appezzamento.
+
+## Colture appezzamento [/api/v1/fields/{fieldId}/colture]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Lista colture dell'appezzamento [GET]
+
+Restituisce l'elenco di tutte le colture associate all'appezzamento, ordinate dalla più recente.
+La prima della lista è la coltura corrente.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "colture": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d10",
+                        "appezzamentoId": "683abc123def456789",
+                        "tipologia": "Vite",
+                        "varieta": null,
+                        "fase": null,
+                        "dataAggiornamento": "2026-05-21T09:00:00.000Z",
+                        "createdAt": "2026-05-21T09:00:00.000Z",
+                        "updatedAt": "2026-05-21T09:00:00.000Z"
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+### Aggiungi coltura all'appezzamento [POST]
+
+Crea una nuova coltura per l'appezzamento. Diventa la nuova coltura corrente (la più recente).
+Le precedenti restano in storico.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "tipologia": "Vite"
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "message": "Coltura aggiunta con successo",
+                "coltura": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d10",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "Vite",
+                    "varieta": null,
+                    "fase": null,
+                    "dataAggiornamento": "2026-05-21T09:00:00.000Z",
+                    "createdAt": "2026-05-21T09:00:00.000Z",
+                    "updatedAt": "2026-05-21T09:00:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Validazione fallita: tipologia deve essere una tra: Vite" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
