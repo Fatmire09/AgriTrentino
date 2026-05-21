@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function FieldDetail() {
@@ -11,6 +11,12 @@ export default function FieldDetail() {
   const [error, setError] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [colture, setColture] = useState([])
+  const [loadingColture, setLoadingColture] = useState(true)
+  const [showAddColtura, setShowAddColtura] = useState(false)
+  const [newTipologia, setNewTipologia] = useState('Vite')
+  const [savingColtura, setSavingColtura] = useState(false)
+  const [colturaError, setColturaError] = useState('')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -48,6 +54,43 @@ export default function FieldDetail() {
       .catch(() => setError('Impossibile contattare il server. Riprova più tardi.'))
       .finally(() => setLoading(false))
   }, [id, navigate])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/colture`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.colture) setColture(data.colture)
+      })
+      .finally(() => setLoadingColture(false))
+  }, [id])
+
+  const handleAddColtura = async () => {
+    setSavingColtura(true)
+    setColturaError('')
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/colture`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tipologia: newTipologia }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setColture((prev) => [data.coltura, ...prev])
+        setShowAddColtura(false)
+      } else {
+        setColturaError(data.error || 'Errore durante il salvataggio')
+      }
+    } catch {
+      setColturaError('Impossibile contattare il server')
+    } finally {
+      setSavingColtura(false)
+    }
+  }
 
   const handleDelete = async () => {
     const token = localStorage.getItem('token')
@@ -169,6 +212,89 @@ export default function FieldDetail() {
             <AlertTriangle className="w-5 h-5" /> Indici di rischio
           </h2>
           <p className="text-sm text-gray-500">Disponibili dopo US34-US37 (calcolo indici fitosanitario e climatico).</p>
+        </section>
+
+        {/* Coltura corrente (US21) */}
+        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-poppins font-semibold text-lg flex items-center gap-2 text-agri-green">
+              <Sprout className="w-5 h-5" /> Coltura
+            </h2>
+            {!showAddColtura && (
+              <button
+                onClick={() => setShowAddColtura(true)}
+                className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-xs font-semibold hover:opacity-90 transition inline-flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" /> {colture.length === 0 ? 'Aggiungi coltura' : 'Cambia coltura'}
+              </button>
+            )}
+          </div>
+
+          {loadingColture && <p className="text-sm text-gray-500">Caricamento...</p>}
+
+          {!loadingColture && colture.length === 0 && !showAddColtura && (
+            <p className="text-sm text-gray-500">Nessuna coltura associata a questo appezzamento.</p>
+          )}
+
+          {!loadingColture && colture.length > 0 && (
+            <div className="space-y-2">
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm font-semibold text-agri-green">Coltura corrente</p>
+                <p className="text-base font-poppins">{colture[0].tipologia}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Aggiornata il {new Date(colture[0].dataAggiornamento).toLocaleDateString('it-IT')}
+                </p>
+              </div>
+              {colture.length > 1 && (
+                <details className="text-sm">
+                  <summary className="cursor-pointer text-gray-600 hover:text-agri-green">
+                    Storico colture ({colture.length - 1})
+                  </summary>
+                  <ul className="mt-2 space-y-1 pl-4">
+                    {colture.slice(1).map((c) => (
+                      <li key={c._id} className="text-xs text-gray-600">
+                        {c.tipologia} — {new Date(c.dataAggiornamento).toLocaleDateString('it-IT')}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          )}
+
+          {showAddColtura && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Tipologia coltura</label>
+              <select
+                value={newTipologia}
+                onChange={(e) => setNewTipologia(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-agri-green"
+                disabled={savingColtura}
+              >
+                <option value="Vite">Vite</option>
+              </select>
+              <p className="text-xs text-gray-500">Altre tipologie (Melo, Piccoli Frutti) saranno disponibili negli sprint futuri.</p>
+
+              {colturaError && <p className="text-red-600 text-sm">{colturaError}</p>}
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => { setShowAddColtura(false); setColturaError('') }}
+                  disabled={savingColtura}
+                  className="px-3 py-1.5 rounded-lg border-2 border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-100 transition inline-flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" /> Annulla
+                </button>
+                <button
+                  onClick={handleAddColtura}
+                  disabled={savingColtura}
+                  className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {savingColtura ? 'Salvataggio...' : 'Conferma'}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Placeholder: Storico interventi */}
