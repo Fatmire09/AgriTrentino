@@ -701,3 +701,78 @@ Il campo `fase` (fase fenologica) è opzionale ma se presente deve essere una de
     + Body
 
             { "error": "Appezzamento non trovato" }
+
+## Coltura singola [/api/v1/fields/{fieldId}/colture/{colturaId}]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+    + colturaId: `664a1b2c3d4e5f6a7b8c9d10` (string, required) - ID MongoDB della coltura
+
+### Aggiorna fase fenologica [PATCH]
+
+Aggiorna manualmente la fase fenologica di una coltura esistente. Aggiorna automaticamente
+anche il campo `dataAggiornamento`. Richiede autenticazione JWT e che l'utente sia il proprietario
+dell'appezzamento padre.
+
+Il campo `fase` deve essere una delle fasi previste per la tipologia della coltura:
+- **Vite**: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "fase": "allegagione"
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Fase fenologica aggiornata con successo",
+                "coltura": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d10",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "Vite",
+                    "varieta": "Chardonnay",
+                    "fase": "allegagione",
+                    "dataAggiornamento": "2026-05-22T09:30:00.000Z",
+                    "createdAt": "2026-05-21T09:00:00.000Z",
+                    "updatedAt": "2026-05-22T09:30:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "La fase fenologica è obbligatoria" }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Validazione fallita: fase 'spaccata' non valida per tipologia 'Vite'. Fasi ammesse: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Coltura non trovata" }
