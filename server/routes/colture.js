@@ -73,4 +73,50 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// US24: PATCH /api/v1/fields/:fieldId/colture/:colturaId
+// Aggiorna manualmente la fase fenologica di una coltura esistente
+router.patch('/:colturaId', requireAuth, async (req, res) => {
+  const { fase } = req.body;
+
+  if (fase === undefined || fase === null || fase === '') {
+    return res.status(400).json({ error: 'La fase fenologica è obbligatoria' });
+  }
+
+  try {
+    // Recupera prima il campo padre per verificare l'ownerId
+    const field = await Field.findById(req.params.fieldId);
+    if (!field) {
+      return res.status(404).json({ error: 'Appezzamento non trovato' });
+    }
+    if (field.ownerId.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+
+    // Recupera la coltura e verifica che appartenga al campo
+    const coltura = await Coltura.findById(req.params.colturaId);
+    if (!coltura || coltura.appezzamentoId.toString() !== field._id.toString()) {
+      return res.status(404).json({ error: 'Coltura non trovata' });
+    }
+
+    // Aggiorna la fase + dataAggiornamento, poi salva (fa scattare il validatore)
+    coltura.fase = fase;
+    coltura.dataAggiornamento = new Date();
+    await coltura.save();
+
+    return res.status(200).json({
+      message: 'Fase fenologica aggiornata con successo',
+      coltura,
+    });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    if (err.name === 'ValidationError') {
+      const messaggio = Object.values(err.errors)[0].message;
+      return res.status(400).json({ error: `Validazione fallita: ${messaggio}` });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
