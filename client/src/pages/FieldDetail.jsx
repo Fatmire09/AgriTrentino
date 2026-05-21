@@ -3,6 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 
+// US22: varietà disponibili per ogni tipologia (deve restare allineato a server/constants/colture.js)
+const VARIETA_PER_TIPOLOGIA = {
+  Vite: ['Chardonnay', 'Pinot Nero', 'Müller-Thurgau', 'Teroldego', 'Marzemino'],
+}
+
 export default function FieldDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -15,6 +20,7 @@ export default function FieldDetail() {
   const [loadingColture, setLoadingColture] = useState(true)
   const [showAddColtura, setShowAddColtura] = useState(false)
   const [newTipologia, setNewTipologia] = useState('Vite')
+  const [newVarieta, setNewVarieta] = useState('')
   const [savingColtura, setSavingColtura] = useState(false)
   const [colturaError, setColturaError] = useState('')
 
@@ -76,12 +82,16 @@ export default function FieldDetail() {
       const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/colture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tipologia: newTipologia }),
+        body: JSON.stringify({
+          tipologia: newTipologia,
+          varieta: newVarieta || null,
+        }),
       })
       const data = await res.json()
       if (res.ok) {
         setColture((prev) => [data.coltura, ...prev])
         setShowAddColtura(false)
+        setNewVarieta('') // reset per il prossimo uso
       } else {
         setColturaError(data.error || 'Errore durante il salvataggio')
       }
@@ -240,7 +250,10 @@ export default function FieldDetail() {
             <div className="space-y-2">
               <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm font-semibold text-agri-green">Coltura corrente</p>
-                <p className="text-base font-poppins">{colture[0].tipologia}</p>
+                <p className="text-base font-poppins">
+                  {colture[0].tipologia}
+                  {colture[0].varieta && <span className="text-gray-600 text-sm"> — {colture[0].varieta}</span>}
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
                   Aggiornata il {new Date(colture[0].dataAggiornamento).toLocaleDateString('it-IT')}
                 </p>
@@ -253,7 +266,10 @@ export default function FieldDetail() {
                   <ul className="mt-2 space-y-1 pl-4">
                     {colture.slice(1).map((c) => (
                       <li key={c._id} className="text-xs text-gray-600">
-                        {c.tipologia} — {new Date(c.dataAggiornamento).toLocaleDateString('it-IT')}
+                        {c.tipologia}
+                        {c.varieta && ` (${c.varieta})`}
+                        {' — '}
+                        {new Date(c.dataAggiornamento).toLocaleDateString('it-IT')}
                       </li>
                     ))}
                   </ul>
@@ -274,6 +290,20 @@ export default function FieldDetail() {
                 <option value="Vite">Vite</option>
               </select>
               <p className="text-xs text-gray-500">Altre tipologie (Melo, Piccoli Frutti) saranno disponibili negli sprint futuri.</p>
+
+              <label className="block text-sm font-medium text-gray-700 mt-3">Varietà (opzionale)</label>
+              <select
+                value={newVarieta}
+                onChange={(e) => setNewVarieta(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-agri-green"
+                disabled={savingColtura}
+              >
+                <option value="">— Nessuna varietà specifica —</option>
+                {(VARIETA_PER_TIPOLOGIA[newTipologia] || []).map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">Le varietà disponibili dipendono dalla tipologia scelta.</p>
 
               {colturaError && <p className="text-red-600 text-sm">{colturaError}</p>}
 
