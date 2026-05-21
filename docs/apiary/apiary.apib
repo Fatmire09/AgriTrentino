@@ -639,6 +639,9 @@ Il campo `varieta` è opzionale ma se presente deve essere coerente con la `tipo
 - **Vite**: Chardonnay, Pinot Nero, Müller-Thurgau, Teroldego, Marzemino
 Altre tipologie e varietà saranno introdotte negli sprint futuri (Melo, Piccoli Frutti).
 
+Il campo `fase` (fase fenologica) è opzionale ma se presente deve essere una delle fasi previste per la tipologia:
+- **Vite**: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie
+
 + Request (application/json)
 
     + Headers
@@ -648,7 +651,8 @@ Altre tipologie e varietà saranno introdotte negli sprint futuri (Melo, Piccoli
     + Body
             {
                 "tipologia": "Vite",
-                "varieta": "Chardonnay"
+                "varieta": "Chardonnay",
+                "fase": "fioritura"
             }
             }
 
@@ -663,7 +667,7 @@ Altre tipologie e varietà saranno introdotte negli sprint futuri (Melo, Piccoli
                     "appezzamentoId": "683abc123def456789",
                     "tipologia": "Vite",
                     "varieta": "Chardonnay",
-                    "fase": null,
+                    "fase": "fioritura",
                     "dataAggiornamento": "2026-05-21T09:00:00.000Z",
                     "createdAt": "2026-05-21T09:00:00.000Z",
                     "updatedAt": "2026-05-21T09:00:00.000Z"
@@ -679,6 +683,10 @@ Altre tipologie e varietà saranno introdotte negli sprint futuri (Melo, Piccoli
 + Response 400 (application/json)
     + Body
             { "error": "Validazione fallita: varieta 'Sangiovese' non valida per tipologia 'Vite'. Varietà ammesse: Chardonnay, Pinot Nero, Müller-Thurgau, Teroldego, Marzemino" }
+
++ Response 400 (application/json)
+    + Body
+            { "error": "Validazione fallita: fase 'spaccata' non valida per tipologia 'Vite'. Fasi ammesse: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie" }
 
             { "error": "Token mancante" }
 
