@@ -8,6 +8,22 @@ const VARIETA_PER_TIPOLOGIA = {
   Vite: ['Chardonnay', 'Pinot Nero', 'Müller-Thurgau', 'Teroldego', 'Marzemino'],
 }
 
+// US23: fasi fenologiche per tipologia (allineato a server/constants/colture.js)
+const FASI_PER_TIPOLOGIA = {
+  Vite: ['gemma_dormiente', 'germogliamento', 'fioritura', 'allegagione', 'invaiatura', 'maturazione', 'caduta_foglie'],
+}
+
+// Etichette user-friendly per le fasi (sostituiscono gli underscore)
+const ETICHETTE_FASI = {
+  gemma_dormiente: 'Gemma dormiente',
+  germogliamento: 'Germogliamento',
+  fioritura: 'Fioritura',
+  allegagione: 'Allegagione',
+  invaiatura: 'Invaiatura',
+  maturazione: 'Maturazione',
+  caduta_foglie: 'Caduta foglie',
+}
+
 export default function FieldDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -21,6 +37,7 @@ export default function FieldDetail() {
   const [showAddColtura, setShowAddColtura] = useState(false)
   const [newTipologia, setNewTipologia] = useState('Vite')
   const [newVarieta, setNewVarieta] = useState('')
+  const [newFase, setNewFase] = useState('')
   const [savingColtura, setSavingColtura] = useState(false)
   const [colturaError, setColturaError] = useState('')
 
@@ -85,6 +102,7 @@ export default function FieldDetail() {
         body: JSON.stringify({
           tipologia: newTipologia,
           varieta: newVarieta || null,
+          fase: newFase || null,
         }),
       })
       const data = await res.json()
@@ -92,6 +110,7 @@ export default function FieldDetail() {
         setColture((prev) => [data.coltura, ...prev])
         setShowAddColtura(false)
         setNewVarieta('') // reset per il prossimo uso
+        setNewFase('')
       } else {
         setColturaError(data.error || 'Errore durante il salvataggio')
       }
@@ -224,7 +243,7 @@ export default function FieldDetail() {
           <p className="text-sm text-gray-500">Disponibili dopo US34-US37 (calcolo indici fitosanitario e climatico).</p>
         </section>
 
-        {/* Coltura corrente (US21) */}
+        {/* Coltura corrente (US21, US22, US23) */}
         <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-poppins font-semibold text-lg flex items-center gap-2 text-agri-green">
@@ -254,6 +273,11 @@ export default function FieldDetail() {
                   {colture[0].tipologia}
                   {colture[0].varieta && <span className="text-gray-600 text-sm"> — {colture[0].varieta}</span>}
                 </p>
+                {colture[0].fase && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-medium">Fase fenologica:</span> {ETICHETTE_FASI[colture[0].fase] || colture[0].fase}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   Aggiornata il {new Date(colture[0].dataAggiornamento).toLocaleDateString('it-IT')}
                 </p>
@@ -268,6 +292,7 @@ export default function FieldDetail() {
                       <li key={c._id} className="text-xs text-gray-600">
                         {c.tipologia}
                         {c.varieta && ` (${c.varieta})`}
+                        {c.fase && ` · ${ETICHETTE_FASI[c.fase] || c.fase}`}
                         {' — '}
                         {new Date(c.dataAggiornamento).toLocaleDateString('it-IT')}
                       </li>
@@ -304,6 +329,20 @@ export default function FieldDetail() {
                 ))}
               </select>
               <p className="text-xs text-gray-500">Le varietà disponibili dipendono dalla tipologia scelta.</p>
+
+              <label className="block text-sm font-medium text-gray-700 mt-3">Fase fenologica (opzionale)</label>
+              <select
+                value={newFase}
+                onChange={(e) => setNewFase(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-agri-green"
+                disabled={savingColtura}
+              >
+                <option value="">— Fase non specificata —</option>
+                {(FASI_PER_TIPOLOGIA[newTipologia] || []).map((f) => (
+                  <option key={f} value={f}>{ETICHETTE_FASI[f] || f}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">La fase fenologica viene usata per il calcolo degli indici di rischio (in arrivo nelle prossime US).</p>
 
               {colturaError && <p className="text-red-600 text-sm">{colturaError}</p>}
 
