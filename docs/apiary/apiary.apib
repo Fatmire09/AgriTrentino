@@ -906,6 +906,60 @@ umidità media e precipitazioni totali. Utile per la dashboard meteo del campo.
     + Body
 
             { "error": "Appezzamento non trovato" }
+
+## Stato scheduler meteo [/api/v1/meteo/scheduler/status]
+
+### Stato dello scheduler meteo [GET]
+
+Restituisce lo stato dello scheduler che aggiorna automaticamente i dati meteo
+di tutti gli appezzamenti registrati. Lo scheduler usa una cron expression
+e viene eseguito ogni 60 minuti per impostazione predefinita.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "scheduler": {
+                    "attivo": true,
+                    "cronExpression": "0 * * * *",
+                    "descrizione": "Ogni ora al minuto 0",
+                    "ultimaEsecuzione": "2026-05-22T10:00:00.000Z",
+                    "campiAggiornatiUltimaEsecuzione": 5,
+                    "campiErroriUltimaEsecuzione": 0,
+                    "prossimaEsecuzione": "2026-05-22T11:00:00.000Z"
+                }
+            }
+
++ Response 200 (application/json)
+
+    Scheduler attivo ma non ancora eseguito (appena avviato).
+
+    + Body
+
+            {
+                "scheduler": {
+                    "attivo": true,
+                    "cronExpression": "0 * * * *",
+                    "descrizione": "Ogni ora al minuto 0",
+                    "ultimaEsecuzione": null,
+                    "campiAggiornatiUltimaEsecuzione": 0,
+                    "campiErroriUltimaEsecuzione": 0,
+                    "prossimaEsecuzione": "2026-05-22T11:00:00.000Z"
+                }
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
             
 ### Storico meteo [GET /api/v1/fields/{fieldId}/meteo/storico]
 
