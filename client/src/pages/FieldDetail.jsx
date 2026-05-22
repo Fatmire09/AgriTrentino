@@ -64,6 +64,7 @@ export default function FieldDetail() {
   const [meteoError, setMeteoError] = useState('')
   const [sintesiOggi, setSintesiOggi] = useState(null)
   const [scheduler, setScheduler] = useState(null)
+  const [cacheInfo, setCacheInfo] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -129,6 +130,7 @@ export default function FieldDetail() {
     ])
       .then(([latestData, oggiData]) => {
         if (latestData?.dato) setMeteo(latestData.dato)
+        if (latestData?.cacheInfo) setCacheInfo(latestData.cacheInfo)
         if (oggiData?.sintesi) setSintesiOggi(oggiData.sintesi)
       })
       .finally(() => setLoadingMeteo(false))
@@ -222,6 +224,7 @@ export default function FieldDetail() {
         })
         const d2 = await r2.json()
         if (d2?.dato) setMeteo(d2.dato)
+        if (d2?.cacheInfo) setCacheInfo(d2.cacheInfo)
         // Ricarica anche la sintesi giornaliera (US26)
         const r3 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/oggi`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -363,6 +366,21 @@ export default function FieldDetail() {
           {meteoError && <p className="text-red-600 text-sm mb-2">{meteoError}</p>}
 
           {loadingMeteo && <p className="text-sm text-gray-500">Caricamento dati meteo...</p>}
+
+          {cacheInfo && cacheInfo.ultimoTentativoRiuscito === false && cacheInfo.etaDatoMinuti > 120 && meteo && (
+            <div className="mb-3 flex items-start gap-2 px-3 py-2 bg-yellow-50 border border-yellow-300 rounded-lg text-sm">
+              <AlertTriangle className="w-4 h-4 text-yellow-700 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-yellow-900">
+                <p className="font-semibold">Servizio meteo non raggiungibile</p>
+                <p className="text-xs mt-0.5">
+                  Stai vedendo l'ultima rilevazione salvata in cache, del {new Date(meteo.timestamp).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.
+                  {cacheInfo.ultimoTentativoSync && (
+                    <> Ultimo tentativo di sincronizzazione: {formatTempoTrascorso(cacheInfo.ultimoTentativoSync)}.</>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
 
           {!loadingMeteo && !meteo && !meteoError && (
             <p className="text-sm text-gray-500">
