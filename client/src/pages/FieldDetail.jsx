@@ -24,6 +24,20 @@ const ETICHETTE_FASI = {
   caduta_foglie: 'Caduta foglie',
 }
 
+// US26: trasforma un timestamp in stringa relativa ("3 min fa", "2 ore fa", ecc.)
+function formatTempoTrascorso(timestamp) {
+  const minuti = Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000)
+  if (minuti < 1) return 'meno di un minuto fa'
+  if (minuti === 1) return '1 minuto fa'
+  if (minuti < 60) return `${minuti} minuti fa`
+  const ore = Math.floor(minuti / 60)
+  if (ore === 1) return '1 ora fa'
+  if (ore < 24) return `${ore} ore fa`
+  const giorni = Math.floor(ore / 24)
+  if (giorni === 1) return '1 giorno fa'
+  return `${giorni} giorni fa`
+}
+
 export default function FieldDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -48,6 +62,7 @@ export default function FieldDetail() {
   const [loadingMeteo, setLoadingMeteo] = useState(true)
   const [refreshingMeteo, setRefreshingMeteo] = useState(false)
   const [meteoError, setMeteoError] = useState('')
+  const [sintesiOggi, setSintesiOggi] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -102,12 +117,18 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data?.dato) setMeteo(data.dato)
+    // Carica in parallelo ultima rilevazione + sintesi giornaliera (US26)
+    Promise.all([
+      fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => res.ok ? res.json() : null),
+      fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/oggi`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => res.ok ? res.json() : null),
+    ])
+      .then(([latestData, oggiData]) => {
+        if (latestData?.dato) setMeteo(latestData.dato)
+        if (oggiData?.sintesi) setSintesiOggi(oggiData.sintesi)
       })
       .finally(() => setLoadingMeteo(false))
   }, [id])
@@ -130,7 +151,7 @@ export default function FieldDetail() {
       if (res.ok) {
         setColture((prev) => [data.coltura, ...prev])
         setShowAddColtura(false)
-        setNewVarieta('') // reset per il prossimo uso
+        setNewVarieta('')
         setNewFase('')
       } else {
         setColturaError(data.error || 'Errore durante il salvataggio')
@@ -159,7 +180,6 @@ export default function FieldDetail() {
       })
       const data = await res.json()
       if (res.ok) {
-        // Sostituisce la coltura corrente con quella aggiornata
         setColture((prev) => [data.coltura, ...prev.slice(1)])
         setShowUpdateFase(false)
         setUpdatedFase('')
@@ -184,12 +204,17 @@ export default function FieldDetail() {
       })
       const data = await res.json()
       if (res.ok) {
-        // Ricarica l'ultima rilevazione
         const r2 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const d2 = await r2.json()
         if (d2?.dato) setMeteo(d2.dato)
+        // Ricarica anche la sintesi giornaliera (US26)
+        const r3 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/oggi`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const d3 = await r3.json()
+        if (d3?.sintesi) setSintesiOggi(d3.sintesi)
       } else {
         setMeteoError(data.error || 'Errore durante l\'aggiornamento')
       }
@@ -306,7 +331,7 @@ export default function FieldDetail() {
           </div>
         </section>
 
-        {/* Dati meteo (US25) */}
+        {/* Dati meteo (US25 + US26) */}
         <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-poppins font-semibold text-lg flex items-center gap-2 text-agri-green">
@@ -363,10 +388,43 @@ export default function FieldDetail() {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500">
-                Fonte: stazione <span className="font-medium">{meteo.stazioneNome || meteo.stazioneCode}</span> · 
-                Rilevazione: {new Date(meteo.timestamp).toLocaleString('it-IT')}
-              </p>
+              <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
+                <p className="text-gray-500">
+                  Fonte: stazione <span className="font-medium">{meteo.stazioneNome || meteo.stazioneCode}</span>
+                </p>
+                <p className={`font-medium ${
+                  (Date.now() - new Date(meteo.timestamp).getTime()) / 60000 > 60
+                    ? 'text-red-600'
+                    : 'text-gray-500'
+                }`}>
+                  Aggiornato {formatTempoTrascorso(meteo.timestamp)}
+                </p>
+              </div>
+
+              {sintesiOggi && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-semibold text-agri-green mb-2">Oggi al tuo campo</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-500">Temp. min</p>
+                      <p className="font-medium">{sintesiOggi.temperaturaMinC !== null ? `${sintesiOggi.temperaturaMinC} °C` : '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Temp. max</p>
+                      <p className="font-medium">{sintesiOggi.temperaturaMaxC !== null ? `${sintesiOggi.temperaturaMaxC} °C` : '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Umidità media</p>
+                      <p className="font-medium">{sintesiOggi.umiditaMediaPerc !== null ? `${sintesiOggi.umiditaMediaPerc} %` : '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Pioggia totale</p>
+                      <p className="font-medium">{sintesiOggi.precipitazioniTotaliMm !== null ? `${sintesiOggi.precipitazioniTotaliMm} mm` : '—'}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">Basato su {sintesiOggi.numeroRilevazioni} rilevazioni dalle 00:00</p>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -379,7 +437,7 @@ export default function FieldDetail() {
           <p className="text-sm text-gray-500">Disponibili dopo US34-US37 (calcolo indici fitosanitario e climatico).</p>
         </section>
 
-        {/* Coltura corrente (US21, US22, US23) */}
+        {/* Coltura corrente (US21, US22, US23, US24) */}
         <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-poppins font-semibold text-lg flex items-center gap-2 text-agri-green">
