@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 // US22: varietà disponibili per ogni tipologia (deve restare allineato a server/constants/colture.js)
@@ -63,6 +63,7 @@ export default function FieldDetail() {
   const [refreshingMeteo, setRefreshingMeteo] = useState(false)
   const [meteoError, setMeteoError] = useState('')
   const [sintesiOggi, setSintesiOggi] = useState(null)
+  const [scheduler, setScheduler] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -132,6 +133,18 @@ export default function FieldDetail() {
       })
       .finally(() => setLoadingMeteo(false))
   }, [id])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch('http://localhost:3001/api/v1/meteo/scheduler/status', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.scheduler) setScheduler(data.scheduler)
+      })
+  }, [])
 
   const handleAddColtura = async () => {
     setSavingColtura(true)
@@ -400,6 +413,24 @@ export default function FieldDetail() {
                   Aggiornato {formatTempoTrascorso(meteo.timestamp)}
                 </p>
               </div>
+
+              {scheduler?.attivo && (
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs">
+                  <Clock className="w-4 h-4 text-agri-green flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-agri-green font-semibold">Aggiornamento automatico attivo</p>
+                    <p className="text-gray-600">
+                      {scheduler.descrizione}
+                      {scheduler.ultimaEsecuzione && (
+                        <> · ultimo: {formatTempoTrascorso(scheduler.ultimaEsecuzione)}</>
+                      )}
+                      {scheduler.prossimaEsecuzione && (
+                        <> · prossimo: {new Date(scheduler.prossimaEsecuzione).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {sintesiOggi && (
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg">
