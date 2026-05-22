@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 // US22: varietà disponibili per ogni tipologia (deve restare allineato a server/constants/colture.js)
@@ -44,6 +44,10 @@ export default function FieldDetail() {
   const [updatedFase, setUpdatedFase] = useState('')
   const [updatingFase, setUpdatingFase] = useState(false)
   const [updateFaseError, setUpdateFaseError] = useState('')
+  const [meteo, setMeteo] = useState(null)
+  const [loadingMeteo, setLoadingMeteo] = useState(true)
+  const [refreshingMeteo, setRefreshingMeteo] = useState(false)
+  const [meteoError, setMeteoError] = useState('')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -93,6 +97,19 @@ export default function FieldDetail() {
         if (data?.colture) setColture(data.colture)
       })
       .finally(() => setLoadingColture(false))
+  }, [id])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.dato) setMeteo(data.dato)
+      })
+      .finally(() => setLoadingMeteo(false))
   }, [id])
 
   const handleAddColtura = async () => {
@@ -153,6 +170,33 @@ export default function FieldDetail() {
       setUpdateFaseError('Impossibile contattare il server')
     } finally {
       setUpdatingFase(false)
+    }
+  }
+
+  const handleRefreshMeteo = async () => {
+    setRefreshingMeteo(true)
+    setMeteoError('')
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/refresh`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (res.ok) {
+        // Ricarica l'ultima rilevazione
+        const r2 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const d2 = await r2.json()
+        if (d2?.dato) setMeteo(d2.dato)
+      } else {
+        setMeteoError(data.error || 'Errore durante l\'aggiornamento')
+      }
+    } catch {
+      setMeteoError('Impossibile contattare il server')
+    } finally {
+      setRefreshingMeteo(false)
     }
   }
 
@@ -262,12 +306,69 @@ export default function FieldDetail() {
           </div>
         </section>
 
-        {/* Placeholder: Meteo */}
-        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4 opacity-60">
-          <h2 className="font-poppins font-semibold text-lg mb-2 flex items-center gap-2 text-agri-green">
-            <Cloud className="w-5 h-5" /> Dati meteo
-          </h2>
-          <p className="text-sm text-gray-500">Disponibili dopo l'implementazione del modulo meteo (US26-US31).</p>
+        {/* Dati meteo (US25) */}
+        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-poppins font-semibold text-lg flex items-center gap-2 text-agri-green">
+              <Cloud className="w-5 h-5" /> Dati meteo
+            </h2>
+            <button
+              onClick={handleRefreshMeteo}
+              disabled={refreshingMeteo}
+              className="px-3 py-1.5 rounded-lg border-2 border-agri-green text-agri-green text-xs font-semibold hover:bg-green-50 transition inline-flex items-center gap-1 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${refreshingMeteo ? 'animate-spin' : ''}`} />
+              {refreshingMeteo ? 'Aggiornamento...' : 'Aggiorna'}
+            </button>
+          </div>
+
+          {meteoError && <p className="text-red-600 text-sm mb-2">{meteoError}</p>}
+
+          {loadingMeteo && <p className="text-sm text-gray-500">Caricamento dati meteo...</p>}
+
+          {!loadingMeteo && !meteo && !meteoError && (
+            <p className="text-sm text-gray-500">
+              Nessun dato meteo disponibile. Clicca "Aggiorna" per recuperare le ultime rilevazioni.
+            </p>
+          )}
+
+          {!loadingMeteo && meteo && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 bg-orange-50 rounded-lg flex items-center gap-3">
+                  <Thermometer className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">Temperatura</p>
+                    <p className="text-lg font-semibold">
+                      {meteo.temperaturaC !== null ? `${meteo.temperaturaC.toFixed(1)} °C` : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg flex items-center gap-3">
+                  <Droplets className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">Umidità relativa</p>
+                    <p className="text-lg font-semibold">
+                      {meteo.umiditaPerc !== null ? `${meteo.umiditaPerc} %` : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-3 bg-cyan-50 rounded-lg flex items-center gap-3">
+                  <CloudRain className="w-6 h-6 text-cyan-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">Precipitazioni</p>
+                    <p className="text-lg font-semibold">
+                      {meteo.precipitazioniMm !== null ? `${meteo.precipitazioniMm.toFixed(1)} mm` : '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                Fonte: stazione <span className="font-medium">{meteo.stazioneNome || meteo.stazioneCode}</span> · 
+                Rilevazione: {new Date(meteo.timestamp).toLocaleString('it-IT')}
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Placeholder: Indici di rischio */}
