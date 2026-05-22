@@ -47,6 +47,10 @@ const fieldSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  // US28: tracking sincronizzazioni meteo
+  ultimoTentativoSync: { type: Date, default: null },
+  ultimoSuccessoSync: { type: Date, default: null },
+  ultimoTentativoRiuscito: { type: Boolean, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Field', fieldSchema);
