@@ -795,7 +795,10 @@ I dati possono essere aggiornati manualmente tramite l'endpoint `/refresh` oppur
 
 ### Ultimo dato meteo [GET /api/v1/fields/{fieldId}/meteo/latest]
 
-Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento.
+Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento, insieme a `cacheInfo`
+che indica quando è stato fatto l'ultimo tentativo di sincronizzazione con MeteoTrentino e se
+è andato a buon fine. Se `ultimoTentativoRiuscito === false` e `etaDatoMinuti` è elevato, il
+dato visualizzato è "cached" perché il servizio esterno non è raggiungibile (cfr. US28).
 
 + Request
 
@@ -818,6 +821,12 @@ Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento.
                     "umiditaPerc": 64,
                     "precipitazioniMm": 0,
                     "createdAt": "2026-05-22T09:05:12.123Z"
+                },
+                "cacheInfo": {
+                    "ultimoTentativoSync": "2026-05-22T11:00:05.000Z",
+                    "ultimoSuccessoSync": "2026-05-22T09:05:12.000Z",
+                    "ultimoTentativoRiuscito": false,
+                    "etaDatoMinuti": 145
                 }
             }
 
