@@ -42,6 +42,11 @@ const fieldSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  // US25: code della stazione MeteoTrentino assegnata
+  stazioneAssegnataCode: {
+    type: String,
+    default: null,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Field', fieldSchema);
