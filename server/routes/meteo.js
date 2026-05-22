@@ -97,4 +97,63 @@ router.post('/refresh', requireAuth, async (req, res) => {
   }
 });
 
+// GET /oggi — sintesi meteo della giornata corrente (US26)
+router.get('/oggi', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    // Inizio del giorno locale (00:00)
+    const inizioGiorno = new Date();
+    inizioGiorno.setHours(0, 0, 0, 0);
+
+    const risultato = await DatiMeteo.aggregate([
+      {
+        $match: {
+          appezzamentoId: field._id,
+          timestamp: { $gte: inizioGiorno },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          stazione: { $first: '$stazioneCode' },
+          numeroRilevazioni: { $sum: 1 },
+          temperaturaMinC: { $min: '$temperaturaC' },
+          temperaturaMaxC: { $max: '$temperaturaC' },
+          temperaturaMediaC: { $avg: '$temperaturaC' },
+          umiditaMediaPerc: { $avg: '$umiditaPerc' },
+          precipitazioniTotaliMm: { $sum: '$precipitazioniMm' },
+        },
+      },
+    ]);
+
+    if (risultato.length === 0) {
+      return res.status(200).json({
+        sintesi: null,
+        message: 'Nessuna rilevazione disponibile per oggi',
+      });
+    }
+
+    const r = risultato[0];
+    return res.status(200).json({
+      sintesi: {
+        data: inizioGiorno.toISOString().split('T')[0],
+        stazione: r.stazione,
+        numeroRilevazioni: r.numeroRilevazioni,
+        temperaturaMinC: r.temperaturaMinC !== null ? Number(r.temperaturaMinC.toFixed(1)) : null,
+        temperaturaMaxC: r.temperaturaMaxC !== null ? Number(r.temperaturaMaxC.toFixed(1)) : null,
+        temperaturaMediaC: r.temperaturaMediaC !== null ? Number(r.temperaturaMediaC.toFixed(1)) : null,
+        umiditaMediaPerc: r.umiditaMediaPerc !== null ? Math.round(r.umiditaMediaPerc) : null,
+        precipitazioniTotaliMm: r.precipitazioniTotaliMm !== null ? Number(r.precipitazioniTotaliMm.toFixed(1)) : null,
+      },
+    });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
