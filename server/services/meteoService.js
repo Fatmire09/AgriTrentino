@@ -1,6 +1,7 @@
 const { XMLParser } = require('fast-xml-parser');
 const Stazione = require('../models/Stazione');
 const DatiMeteo = require('../models/DatiMeteo');
+const Field = require('../models/Field');
 
 // ────────────────────────────────────────────────────────────────────────────────
 // SERVIZIO METEO — US25
@@ -286,10 +287,39 @@ async function aggiornaMeteoCampo(field) {
   };
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// 5. AGGIORNA METEO PER TUTTI I CAMPI (US27 — usato dallo scheduler)
+// ────────────────────────────────────────────────────────────────────────────────
+
+async function aggiornaTuttiICampi() {
+  const campi = await Field.find({});
+  let aggiornati = 0;
+  let errori = 0;
+  const dettagliErrori = [];
+
+  for (const campo of campi) {
+    try {
+      await aggiornaMeteoCampo(campo);
+      aggiornati++;
+    } catch (err) {
+      errori++;
+      dettagliErrori.push({ campoId: campo._id.toString(), nome: campo.nome, errore: err.message });
+    }
+  }
+
+  return {
+    totaleCampi: campi.length,
+    aggiornati,
+    errori,
+    dettagliErrori,
+  };
+}
+
 module.exports = {
   aggiornaCacheStazioni,
   trovaStazioneVicina,
   fetchDatiStazione,
   aggiornaMeteoCampo,
+  aggiornaTuttiICampi,
   distanzaHaversineKm,
 };

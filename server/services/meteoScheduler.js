@@ -1,5 +1,4 @@
 const cron = require('node-cron');
-const Field = require('../models/Field');
 const meteoService = require('./meteoService');
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -44,30 +43,25 @@ async function eseguiAggiornamento() {
   const inizio = new Date();
   console.log(`[meteo scheduler] Avvio aggiornamento alle ${inizio.toISOString()}`);
 
-  let aggiornati = 0;
-  let errori = 0;
-
+  let risultato = { totaleCampi: 0, aggiornati: 0, errori: 0, dettagliErrori: [] };
   try {
-    const campi = await Field.find({});
-    for (const campo of campi) {
-      try {
-        await meteoService.aggiornaMeteoCampo(campo);
-        aggiornati++;
-      } catch (err) {
-        errori++;
-        console.error(`[meteo scheduler] errore campo ${campo._id}: ${err.message}`);
-      }
-    }
+    risultato = await meteoService.aggiornaTuttiICampi();
   } catch (err) {
     console.error('[meteo scheduler] errore globale:', err.message);
   }
 
   stato.ultimaEsecuzione = inizio;
-  stato.campiAggiornatiUltimaEsecuzione = aggiornati;
-  stato.campiErroriUltimaEsecuzione = errori;
+  stato.campiAggiornatiUltimaEsecuzione = risultato.aggiornati;
+  stato.campiErroriUltimaEsecuzione = risultato.errori;
+
+  if (risultato.dettagliErrori.length > 0) {
+    for (const e of risultato.dettagliErrori) {
+      console.error(`[meteo scheduler] errore campo ${e.campoId} "${e.nome}": ${e.errore}`);
+    }
+  }
 
   const durataMs = Date.now() - inizio.getTime();
-  console.log(`[meteo scheduler] Fine: ${aggiornati} campi aggiornati, ${errori} errori, ${durataMs}ms`);
+  console.log(`[meteo scheduler] Fine: ${risultato.aggiornati}/${risultato.totaleCampi} campi aggiornati, ${risultato.errori} errori, ${durataMs}ms`);
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
