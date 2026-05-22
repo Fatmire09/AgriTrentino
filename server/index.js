@@ -7,6 +7,7 @@ const authRouter = require('./routes/auth');
 const fieldsRouter = require('./routes/fields');
 const colturaRoutes = require('./routes/colture');
 const meteoRoutes = require('./routes/meteo');
+const meteoScheduler = require('./services/meteoScheduler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,6 +28,8 @@ mongoose
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  // US27: avvia lo scheduler meteo periodico
+  meteoScheduler.avvia();
 });
 
 module.exports = app;
