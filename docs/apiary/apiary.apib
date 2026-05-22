@@ -849,7 +849,64 @@ Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento.
     + Body
 
             { "error": "Appezzamento non trovato" }
+### Sintesi meteo di oggi [GET /api/v1/fields/{fieldId}/meteo/oggi]
 
+Restituisce una sintesi aggregata delle rilevazioni meteo della giornata corrente
+(dalle 00:00 di oggi fino al momento attuale): temperatura minima/massima/media,
+umidità media e precipitazioni totali. Utile per la dashboard meteo del campo.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "sintesi": {
+                    "data": "2026-05-22",
+                    "stazione": "T0405",
+                    "numeroRilevazioni": 12,
+                    "temperaturaMinC": 12.3,
+                    "temperaturaMaxC": 21.7,
+                    "temperaturaMediaC": 17.4,
+                    "umiditaMediaPerc": 62,
+                    "precipitazioniTotaliMm": 3.5
+                }
+            }
+
++ Response 200 (application/json)
+
+    Nessuna rilevazione disponibile per oggi.
+
+    + Body
+
+            {
+                "sintesi": null,
+                "message": "Nessuna rilevazione disponibile per oggi"
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+            
 ### Storico meteo [GET /api/v1/fields/{fieldId}/meteo/storico]
 
 Restituisce le ultime 48 ore di rilevazioni meteo per l'appezzamento, ordinate dalla più recente.
