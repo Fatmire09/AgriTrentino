@@ -213,78 +213,96 @@ async function fetchDatiStazione(codice) {
 // 4. AGGIORNA METEO PER UN APPEZZAMENTO 
 
 async function aggiornaMeteoCampo(field) {
-  // Se il campo non ha ancora una stazione assegnata, calcolala
-  let stazioneCode = field.stazioneAssegnataCode;
-  let stazione = null;
-  let distanzaKm = null;
+  // US28: marca il tentativo (anche se poi fallirà)
+  field.ultimoTentativoSync = new Date();
+  field.ultimoTentativoRiuscito = false; // sarà true se arriviamo in fondo senza errori
 
-  if (!stazioneCode) {
-    const risultato = await trovaStazioneVicina(field.latitudine, field.longitudine);
-    stazione = risultato.stazione;
-    distanzaKm = risultato.distanzaKm;
-    stazioneCode = stazione.code;
-    field.stazioneAssegnataCode = stazioneCode;
-    await field.save();
-  } else {
-    stazione = await Stazione.findOne({ code: stazioneCode });
-    if (stazione) {
-      distanzaKm = Math.round(
-        distanzaHaversineKm(field.latitudine, field.longitudine, stazione.latitudine, stazione.longitudine) * 10
-      ) / 10;
+  try {
+    // Se il campo non ha ancora una stazione assegnata, calcolala
+    let stazioneCode = field.stazioneAssegnataCode;
+    let stazione = null;
+    let distanzaKm = null;
+
+    if (!stazioneCode) {
+      const risultato = await trovaStazioneVicina(field.latitudine, field.longitudine);
+      stazione = risultato.stazione;
+      distanzaKm = risultato.distanzaKm;
+      stazioneCode = stazione.code;
+      field.stazioneAssegnataCode = stazioneCode;
+    } else {
+      stazione = await Stazione.findOne({ code: stazioneCode });
+      if (stazione) {
+        distanzaKm = Math.round(
+          distanzaHaversineKm(field.latitudine, field.longitudine, stazione.latitudine, stazione.longitudine) * 10
+        ) / 10;
+      }
     }
-  }
 
-  if (!stazione) {
-    throw new Error(`Stazione ${stazioneCode} non trovata nel sistema`);
-  }
+    if (!stazione) {
+      throw new Error(`Stazione ${stazioneCode} non trovata nel sistema`);
+    }
 
-  const dati = await fetchDatiStazione(stazione.code);
+    const dati = await fetchDatiStazione(stazione.code);
 
-  // Marca il fetch come riuscito
-  stazione.ultimoFetchOk = new Date();
-  await stazione.save();
+    // Marca il fetch come riuscito (sulla stazione)
+    stazione.ultimoFetchOk = new Date();
+    await stazione.save();
 
-  if (dati.length === 0) {
+    if (dati.length === 0) {
+      // Successo "tecnico" (nessun errore) ma nessun dato nuovo: lo trattiamo come successo
+      field.ultimoSuccessoSync = new Date();
+      field.ultimoTentativoRiuscito = true;
+      await field.save();
+      return {
+        stazione: { code: stazione.code, nome: stazione.nome, distanzaKm },
+        datiSalvati: 0,
+        datoCorrente: null,
+      };
+    }
+
+    // Salva i dati con upsert
+    const operazioni = dati.map((d) => ({
+      updateOne: {
+        filter: { appezzamentoId: field._id, timestamp: d.timestamp },
+        update: {
+          $set: {
+            appezzamentoId: field._id,
+            stazioneCode: stazione.code,
+            stazioneNome: stazione.nome,
+            timestamp: d.timestamp,
+            temperaturaC: d.temperaturaC,
+            umiditaPerc: d.umiditaPerc,
+            precipitazioniMm: d.precipitazioniMm,
+          },
+        },
+        upsert: true,
+      },
+    }));
+    const result = await DatiMeteo.bulkWrite(operazioni);
+    const datiSalvati = (result.upsertedCount || 0) + (result.modifiedCount || 0);
+    const datoCorrente = dati[dati.length - 1];
+
+    // Sync riuscito → aggiorna i timestamp
+    field.ultimoSuccessoSync = new Date();
+    field.ultimoTentativoRiuscito = true;
+    await field.save();
+
     return {
       stazione: { code: stazione.code, nome: stazione.nome, distanzaKm },
-      datiSalvati: 0,
-      datoCorrente: null,
-    };
-  }
-
-  // Salva i dati con upsert (evita doppioni grazie all'indice univoco)
-  const operazioni = dati.map((d) => ({
-    updateOne: {
-      filter: { appezzamentoId: field._id, timestamp: d.timestamp },
-      update: {
-        $set: {
-          appezzamentoId: field._id,
-          stazioneCode: stazione.code,
-          stazioneNome: stazione.nome,
-          timestamp: d.timestamp,
-          temperaturaC: d.temperaturaC,
-          umiditaPerc: d.umiditaPerc,
-          precipitazioniMm: d.precipitazioniMm,
-        },
+      datiSalvati,
+      datoCorrente: {
+        timestamp: datoCorrente.timestamp,
+        temperaturaC: datoCorrente.temperaturaC,
+        umiditaPerc: datoCorrente.umiditaPerc,
+        precipitazioniMm: datoCorrente.precipitazioniMm,
       },
-      upsert: true,
-    },
-  }));
-  const result = await DatiMeteo.bulkWrite(operazioni);
-  const datiSalvati = (result.upsertedCount || 0) + (result.modifiedCount || 0);
-
-  const datoCorrente = dati[dati.length - 1];
-
-  return {
-    stazione: { code: stazione.code, nome: stazione.nome, distanzaKm },
-    datiSalvati,
-    datoCorrente: {
-      timestamp: datoCorrente.timestamp,
-      temperaturaC: datoCorrente.temperaturaC,
-      umiditaPerc: datoCorrente.umiditaPerc,
-      precipitazioniMm: datoCorrente.precipitazioniMm,
-    },
-  };
+    };
+  } catch (err) {
+    // Sync fallito → salva comunque il tentativo per la cacheInfo
+    field.ultimoTentativoRiuscito = false;
+    await field.save();
+    throw err; // rilancia per gestione nel chiamante
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────────────────

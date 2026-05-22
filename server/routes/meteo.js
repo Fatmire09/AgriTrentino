@@ -36,13 +36,22 @@ router.get('/latest', requireAuth, async (req, res) => {
     const dato = await DatiMeteo.findOne({ appezzamentoId: field._id })
       .sort({ timestamp: -1 });
 
+    // US28: calcola cacheInfo dal Field
+    const cacheInfo = {
+      ultimoTentativoSync: field.ultimoTentativoSync,
+      ultimoSuccessoSync: field.ultimoSuccessoSync,
+      ultimoTentativoRiuscito: field.ultimoTentativoRiuscito,
+      etaDatoMinuti: dato ? Math.floor((Date.now() - new Date(dato.timestamp).getTime()) / 60000) : null,
+    };
+
     if (!dato) {
       return res.status(200).json({
         dato: null,
+        cacheInfo,
         message: 'Nessun dato meteo disponibile per questo appezzamento',
       });
     }
-    return res.status(200).json({ dato });
+    return res.status(200).json({ dato, cacheInfo });
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'ID non valido' });
