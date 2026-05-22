@@ -776,3 +776,193 @@ Il campo `fase` deve essere una delle fasi previste per la tipologia della coltu
     + Body
 
             { "error": "Coltura non trovata" }
+
+# Group Meteo
+
+Endpoint per la gestione dei dati meteorologici associati agli appezzamenti.
+
+Il sistema utilizza le **stazioni meteo ufficiali di Meteo Trentino** (open data, Provincia Autonoma di Trento). Quando viene creato un nuovo appezzamento, il sistema:
+1. Trova automaticamente la stazione meteo più vicina alle sue coordinate (formula di Haversine)
+2. Recupera le ultime rilevazioni di temperatura, umidità relativa e precipitazioni
+3. Le salva nella collezione `DatiMeteo` associandole all'appezzamento
+
+I dati possono essere aggiornati manualmente tramite l'endpoint `/refresh` oppure consultati tramite `/latest` (ultima rilevazione) e `/storico` (ultime 48 ore).
+
+## Meteo appezzamento [/api/v1/fields/{fieldId}/meteo]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Ultimo dato meteo [GET /api/v1/fields/{fieldId}/meteo/latest]
+
+Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "dato": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d20",
+                    "appezzamentoId": "683abc123def456789",
+                    "stazioneCode": "T0405",
+                    "stazioneNome": "Ala (Maso Le Pozze)",
+                    "timestamp": "2026-05-22T09:00:00.000Z",
+                    "temperaturaC": 16,
+                    "umiditaPerc": 64,
+                    "precipitazioniMm": 0,
+                    "createdAt": "2026-05-22T09:05:12.123Z"
+                }
+            }
+
++ Response 200 (application/json)
+
+    Nessun dato meteo ancora disponibile (es. appezzamento appena creato e refresh non completato).
+
+    + Body
+
+            {
+                "dato": null,
+                "message": "Nessun dato meteo disponibile per questo appezzamento"
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+### Storico meteo [GET /api/v1/fields/{fieldId}/meteo/storico]
+
+Restituisce le ultime 48 ore di rilevazioni meteo per l'appezzamento, ordinate dalla più recente.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "dati": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d20",
+                        "appezzamentoId": "683abc123def456789",
+                        "stazioneCode": "T0405",
+                        "timestamp": "2026-05-22T09:00:00.000Z",
+                        "temperaturaC": 16,
+                        "umiditaPerc": 64,
+                        "precipitazioniMm": 0
+                    },
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d1f",
+                        "appezzamentoId": "683abc123def456789",
+                        "stazioneCode": "T0405",
+                        "timestamp": "2026-05-22T08:00:00.000Z",
+                        "temperaturaC": 15.2,
+                        "umiditaPerc": 68,
+                        "precipitazioniMm": 0.2
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+### Aggiorna dati meteo [POST /api/v1/fields/{fieldId}/meteo/refresh]
+
+Forza il recupero dei dati meteo più recenti dalla stazione assegnata all'appezzamento.
+Se l'appezzamento non ha ancora una stazione assegnata, il sistema:
+1. Calcola la stazione più vicina alle coordinate dell'appezzamento
+2. La salva come `stazioneAssegnata` nel campo
+3. Recupera i dati
+
+Questo endpoint viene chiamato **automaticamente** quando un nuovo appezzamento viene creato (`POST /api/v1/fields`).
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Dati meteo aggiornati con successo",
+                "stazione": {
+                    "code": "T0405",
+                    "nome": "Ala (Maso Le Pozze)",
+                    "distanzaKm": 2.3
+                },
+                "datiSalvati": 8,
+                "datoCorrente": {
+                    "timestamp": "2026-05-22T09:00:00.000Z",
+                    "temperaturaC": 16,
+                    "umiditaPerc": 64,
+                    "precipitazioniMm": 0
+                }
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
++ Response 503 (application/json)
+
+    Servizio Meteo Trentino momentaneamente non raggiungibile.
+
+    + Body
+
+            { "error": "Servizio meteo non disponibile, riprova più tardi" }
