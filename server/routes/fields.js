@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Field = require('../models/Field');
 const requireAuth = require('../middleware/auth');
+const meteoService = require('../services/meteoService');
 
 router.get('/', requireAuth, async (req, res) => {
   try {
@@ -33,6 +34,15 @@ router.post('/', requireAuth, async (req, res) => {
       ownerId: req.userId,
     });
     await field.save();
+
+    // US25: avvia in background il fetch meteo iniziale (non blocca la risposta al client)
+    meteoService.aggiornaMeteoCampo(field)
+      .then((risultato) => {
+        console.log(`[meteo auto-trigger] campo ${field._id}: ${risultato.datiSalvati} dati salvati da ${risultato.stazione.code}`);
+      })
+      .catch((err) => {
+        console.error(`[meteo auto-trigger] campo ${field._id}: errore`, err.message);
+      });
 
     return res.status(201).json({
       message: 'Appezzamento creato con successo',
