@@ -4,6 +4,7 @@ const requireAuth = require('../middleware/auth');
 const Field = require('../models/Field');
 const DatiMeteo = require('../models/DatiMeteo');
 const meteoService = require('../services/meteoService');
+const meteoScheduler = require('../services/meteoScheduler');
 
 // ────────────────────────────────────────────────────────────────────────────────
 // ROUTE METEO — US25
@@ -152,6 +153,16 @@ router.get('/oggi', requireAuth, async (req, res) => {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'ID non valido' });
     }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+// US27: GET /scheduler/status — stato dello scheduler meteo
+router.get('/scheduler/status', requireAuth, async (req, res) => {
+  try {
+    const stato = meteoScheduler.getStato();
+    return res.status(200).json({ scheduler: stato });
+  } catch (err) {
     return res.status(500).json({ error: 'Errore interno del server' });
   }
 });

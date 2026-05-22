@@ -20,6 +20,8 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/fields', fieldsRouter);
 app.use('/api/v1/fields/:fieldId/colture', colturaRoutes);
 app.use('/api/v1/fields/:fieldId/meteo', meteoRoutes);
+// US27: endpoint meteo globali (non scoped a un singolo campo) — usa lo stesso router
+app.use('/api/v1/meteo', meteoRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
