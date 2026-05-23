@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const meteoService = require('./meteoService');
+const bilancioIdricoService = require('./bilancioIdricoService');
 
 // ────────────────────────────────────────────────────────────────────────────────
 // SCHEDULER METEO — US27
@@ -102,9 +103,86 @@ function getStato() {
   };
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// CRON BILANCIO IDRICO — US31
+// Calcola ogni notte alle 00:30 il bilancio idrico per tutti i campi
+// ────────────────────────────────────────────────────────────────────────────────
+
+const CRON_BILANCIO_EXPRESSION = '30 0 * * *';
+const CRON_BILANCIO_DESCRIZIONE = 'Ogni notte alle 00:30';
+
+const statoBilancio = {
+  attivo: false,
+  cronExpression: CRON_BILANCIO_EXPRESSION,
+  descrizione: CRON_BILANCIO_DESCRIZIONE,
+  ultimaEsecuzione: null,
+  campiCalcolatiUltimaEsecuzione: 0,
+  campiErroriUltimaEsecuzione: 0,
+};
+
+let taskBilancio = null;
+
+async function eseguiCalcoloBilancio() {
+  const inizio = new Date();
+  console.log(`[bilancio cron] Avvio calcolo bilancio idrico alle ${inizio.toISOString()}`);
+
+  let risultato = { totaleCampi: 0, calcolati: 0, errori: 0, dettagli: [] };
+  try {
+    // Calcola il bilancio del giorno precedente (perché ora 00:30, il giorno appena finito)
+    const ieri = new Date(inizio);
+    ieri.setDate(ieri.getDate() - 1);
+    risultato = await bilancioIdricoService.calcolaBilancioTuttiCampi(ieri);
+  } catch (err) {
+    console.error('[bilancio cron] errore globale:', err.message);
+  }
+
+  statoBilancio.ultimaEsecuzione = inizio;
+  statoBilancio.campiCalcolatiUltimaEsecuzione = risultato.calcolati;
+  statoBilancio.campiErroriUltimaEsecuzione = risultato.errori;
+
+  if (risultato.dettagli.length > 0) {
+    for (const e of risultato.dettagli) {
+      console.error(`[bilancio cron] errore campo ${e.campoId} "${e.nome}": ${e.errore}`);
+    }
+  }
+
+  const durataMs = Date.now() - inizio.getTime();
+  console.log(`[bilancio cron] Fine: ${risultato.calcolati}/${risultato.totaleCampi} campi calcolati, ${risultato.errori} errori, ${durataMs}ms`);
+}
+
+function avviaCronBilancio() {
+  if (taskBilancio) {
+    console.log('[bilancio cron] già avviato, ignoro chiamata duplicata');
+    return;
+  }
+  taskBilancio = cron.schedule(CRON_BILANCIO_EXPRESSION, eseguiCalcoloBilancio, {
+    scheduled: true,
+    timezone: 'Europe/Rome',
+  });
+  statoBilancio.attivo = true;
+  console.log(`[bilancio cron] Avviato con cron "${CRON_BILANCIO_EXPRESSION}" (${CRON_BILANCIO_DESCRIZIONE})`);
+}
+
+function fermaCronBilancio() {
+  if (taskBilancio) {
+    taskBilancio.stop();
+    taskBilancio = null;
+  }
+  statoBilancio.attivo = false;
+}
+
+function getStatoBilancio() {
+  return { ...statoBilancio };
+}
+
 module.exports = {
   avvia,
   ferma,
   getStato,
-  eseguiAggiornamento, // esportato per test manuale
+  eseguiAggiornamento,
+  // US31
+  avviaCronBilancio,
+  fermaCronBilancio,
+  getStatoBilancio,
+  eseguiCalcoloBilancio,
 };
