@@ -796,9 +796,12 @@ I dati possono essere aggiornati manualmente tramite l'endpoint `/refresh` oppur
 ### Ultimo dato meteo [GET /api/v1/fields/{fieldId}/meteo/latest]
 
 Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento, insieme a `cacheInfo`
-che indica quando è stato fatto l'ultimo tentativo di sincronizzazione con MeteoTrentino e se
-è andato a buon fine. Se `ultimoTentativoRiuscito === false` e `etaDatoMinuti` è elevato, il
-dato visualizzato è "cached" perché il servizio esterno non è raggiungibile (cfr. US28).
+(stato sincronizzazione, cfr. US28) e `statoMeteo` (sintesi dello stato del modulo meteo).
+Il campo `statoMeteo` può assumere uno dei seguenti valori:
+- **`ok`**: dato meteo presente e ultima sincronizzazione riuscita (caso normale)
+- **`offline_con_cache`**: ultima sincronizzazione fallita ma esistono dati cached (cfr. US28)
+- **`offline_senza_cache`**: ultima sincronizzazione fallita e NESSUN dato meteo disponibile per il campo (cfr. US29)
+- **`mai_sincronizzato`**: campo appena creato, nessun tentativo di sincronizzazione ancora effettuato
 
 + Request
 
@@ -824,21 +827,29 @@ dato visualizzato è "cached" perché il servizio esterno non è raggiungibile (
                 },
                 "cacheInfo": {
                     "ultimoTentativoSync": "2026-05-22T11:00:05.000Z",
-                    "ultimoSuccessoSync": "2026-05-22T09:05:12.000Z",
-                    "ultimoTentativoRiuscito": false,
-                    "etaDatoMinuti": 145
-                }
+                    "ultimoSuccessoSync": "2026-05-22T11:00:05.000Z",
+                    "ultimoTentativoRiuscito": true,
+                    "etaDatoMinuti": 120
+                },
+                "statoMeteo": "ok"
             }
 
 + Response 200 (application/json)
 
-    Nessun dato meteo ancora disponibile (es. appezzamento appena creato e refresh non completato).
+    Nessun dato meteo + sincronizzazione fallita (campo appena creato + MeteoTrentino offline).
 
     + Body
 
             {
                 "dato": null,
-                "message": "Nessun dato meteo disponibile per questo appezzamento"
+                "cacheInfo": {
+                    "ultimoTentativoSync": "2026-05-22T11:00:05.000Z",
+                    "ultimoSuccessoSync": null,
+                    "ultimoTentativoRiuscito": false,
+                    "etaDatoMinuti": null
+                },
+                "statoMeteo": "offline_senza_cache",
+                "message": "Servizio meteo non disponibile e nessun dato pregresso"
             }
 
 + Response 401 (application/json)
