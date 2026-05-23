@@ -44,14 +44,30 @@ router.get('/latest', requireAuth, async (req, res) => {
       etaDatoMinuti: dato ? Math.floor((Date.now() - new Date(dato.timestamp).getTime()) / 60000) : null,
     };
 
+    // US29: calcola statoMeteo derivato
+    let statoMeteo;
+    if (field.ultimoTentativoRiuscito === null) {
+      statoMeteo = 'mai_sincronizzato';
+    } else if (field.ultimoTentativoRiuscito === true && dato) {
+      statoMeteo = 'ok';
+    } else if (field.ultimoTentativoRiuscito === false && dato) {
+      statoMeteo = 'offline_con_cache';
+    } else {
+      // ultimoTentativoRiuscito === false && !dato
+      statoMeteo = 'offline_senza_cache';
+    }
+
     if (!dato) {
       return res.status(200).json({
         dato: null,
         cacheInfo,
-        message: 'Nessun dato meteo disponibile per questo appezzamento',
+        statoMeteo,
+        message: statoMeteo === 'offline_senza_cache'
+          ? 'Servizio meteo non disponibile e nessun dato pregresso'
+          : 'Nessun dato meteo disponibile per questo appezzamento',
       });
     }
-    return res.status(200).json({ dato, cacheInfo });
+    return res.status(200).json({ dato, cacheInfo, statoMeteo });
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'ID non valido' });
