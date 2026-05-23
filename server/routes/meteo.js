@@ -82,7 +82,14 @@ router.get('/storico', requireAuth, async (req, res) => {
     const field = await trovaCampoAutorizzato(req, res);
     if (!field) return;
 
-    const limite = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    // US30: supporto parametro periodoOre (default 48, min 1, max 720 = 30 giorni)
+    const PERIODO_DEFAULT = 48;
+    const PERIODO_MAX = 720;
+    let periodoOre = parseInt(req.query.periodoOre, 10);
+    if (isNaN(periodoOre) || periodoOre < 1) periodoOre = PERIODO_DEFAULT;
+    if (periodoOre > PERIODO_MAX) periodoOre = PERIODO_MAX;
+
+    const limite = new Date(Date.now() - periodoOre * 60 * 60 * 1000);
     const dati = await DatiMeteo.find({
       appezzamentoId: field._id,
       timestamp: { $gte: limite },
