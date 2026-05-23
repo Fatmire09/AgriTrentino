@@ -65,6 +65,7 @@ export default function FieldDetail() {
   const [sintesiOggi, setSintesiOggi] = useState(null)
   const [scheduler, setScheduler] = useState(null)
   const [cacheInfo, setCacheInfo] = useState(null)
+  const [statoMeteo, setStatoMeteo] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -131,6 +132,7 @@ export default function FieldDetail() {
       .then(([latestData, oggiData]) => {
         if (latestData?.dato) setMeteo(latestData.dato)
         if (latestData?.cacheInfo) setCacheInfo(latestData.cacheInfo)
+        if (latestData?.statoMeteo) setStatoMeteo(latestData.statoMeteo)
         if (oggiData?.sintesi) setSintesiOggi(oggiData.sintesi)
       })
       .finally(() => setLoadingMeteo(false))
@@ -225,6 +227,7 @@ export default function FieldDetail() {
         const d2 = await r2.json()
         if (d2?.dato) setMeteo(d2.dato)
         if (d2?.cacheInfo) setCacheInfo(d2.cacheInfo)
+        if (d2?.statoMeteo) setStatoMeteo(d2.statoMeteo)
         // Ricarica anche la sintesi giornaliera (US26)
         const r3 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/oggi`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -382,7 +385,25 @@ export default function FieldDetail() {
             </div>
           )}
 
-          {!loadingMeteo && !meteo && !meteoError && (
+          {!loadingMeteo && !meteo && !meteoError && statoMeteo === 'offline_senza_cache' && (
+            <div className="flex items-start gap-2 px-3 py-3 bg-red-50 border border-red-300 rounded-lg text-sm">
+              <AlertTriangle className="w-5 h-5 text-red-700 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-red-900">
+                <p className="font-semibold">Servizio meteo non disponibile e nessun dato pregresso</p>
+                <p className="text-xs mt-1">
+                  Il servizio MeteoTrentino non è raggiungibile e non sono presenti dati meteo in cache per questo appezzamento. Gli indici di rischio non possono essere calcolati. Riprova più tardi cliccando "Aggiorna".
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!loadingMeteo && !meteo && !meteoError && statoMeteo === 'mai_sincronizzato' && (
+            <p className="text-sm text-gray-500">
+              Sincronizzazione meteo in corso... I dati saranno disponibili a breve. Se non vedi nulla dopo qualche minuto, clicca "Aggiorna".
+            </p>
+          )}
+
+          {!loadingMeteo && !meteo && !meteoError && !statoMeteo && (
             <p className="text-sm text-gray-500">
               Nessun dato meteo disponibile. Clicca "Aggiorna" per recuperare le ultime rilevazioni.
             </p>
