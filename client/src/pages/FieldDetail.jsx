@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
@@ -68,6 +68,8 @@ export default function FieldDetail() {
   const [cacheInfo, setCacheInfo] = useState(null)
   const [statoMeteo, setStatoMeteo] = useState(null)
   const [storicoMeteo, setStoricoMeteo] = useState([])
+  const [bilancio, setBilancio] = useState(null)
+  const [loadingBilancio, setLoadingBilancio] = useState(true)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -160,6 +162,19 @@ export default function FieldDetail() {
           setStoricoMeteo(datiGrafico)
         }
       })
+  }, [id])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/bilancio-idrico?giorni=7`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.corrente) setBilancio(data.corrente)
+      })
+      .finally(() => setLoadingBilancio(false))
   }, [id])
 
   useEffect(() => {
@@ -567,6 +582,92 @@ export default function FieldDetail() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </section>
+
+        {/* Bilancio idrico (US31) */}
+        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+          <h2 className="font-poppins font-semibold text-lg mb-4 flex items-center gap-2 text-agri-green">
+            <Droplet className="w-5 h-5" /> Bilancio idrico del suolo
+          </h2>
+
+          {loadingBilancio && <p className="text-sm text-gray-500">Caricamento...</p>}
+
+          {!loadingBilancio && !bilancio && (
+            <p className="text-sm text-gray-500">
+              Bilancio idrico non ancora disponibile. Richiede una coltura con fase fenologica impostata
+              e almeno 24 ore di dati meteo. Sarà calcolato automaticamente alle 00:30.
+            </p>
+          )}
+
+          {!loadingBilancio && bilancio && (
+            <div className="space-y-3">
+              {/* Barra umidità suolo */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-medium text-gray-700">Umidità del suolo stimata</span>
+                  <span className="text-lg font-bold" style={{
+                    color: bilancio.umiditaSuoloPerc < 30 ? '#dc2626' : bilancio.umiditaSuoloPerc < 60 ? '#ca8a04' : '#16a34a'
+                  }}>
+                    {bilancio.umiditaSuoloPerc}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${bilancio.umiditaSuoloPerc}%`,
+                      backgroundColor: bilancio.umiditaSuoloPerc < 30 ? '#dc2626' : bilancio.umiditaSuoloPerc < 60 ? '#ca8a04' : '#16a34a',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Indicatore consigli */}
+              <div className={`p-3 rounded-lg text-sm ${
+                bilancio.umiditaSuoloPerc < 30
+                  ? 'bg-red-50 text-red-900'
+                  : bilancio.umiditaSuoloPerc < 60
+                  ? 'bg-yellow-50 text-yellow-900'
+                  : 'bg-green-50 text-green-900'
+              }`}>
+                {bilancio.umiditaSuoloPerc < 30 && (
+                  <>⚠️ Suolo asciutto: irrigazione consigliata.</>
+                )}
+                {bilancio.umiditaSuoloPerc >= 30 && bilancio.umiditaSuoloPerc < 60 && (
+                  <>Suolo moderatamente umido: monitorare nei prossimi giorni.</>
+                )}
+                {bilancio.umiditaSuoloPerc >= 60 && (
+                  <>✅ Suolo ben idratato: nessuna irrigazione necessaria.</>
+                )}
+              </div>
+
+              {/* Dettagli numerici */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm pt-2 border-t border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-500">Riserva idrica</p>
+                  <p className="font-medium">{bilancio.riservaIdricaMm.toFixed(0)} mm</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Pioggia giorno</p>
+                  <p className="font-medium">{bilancio.precipitazioniMm.toFixed(1)} mm</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Evapotraspirazione</p>
+                  <p className="font-medium">{bilancio.evapotraspirazioneMm.toFixed(1)} mm</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Bilancio giorno</p>
+                  <p className={`font-medium ${bilancio.bilancio < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {bilancio.bilancio > 0 ? '+' : ''}{bilancio.bilancio.toFixed(1)} mm
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-400 pt-1">
+                Calcolato il {new Date(bilancio.data).toLocaleDateString('it-IT')} con modello Hargreaves-Samani · Capacità di campo: 150 mm
+              </p>
             </div>
           )}
         </section>
