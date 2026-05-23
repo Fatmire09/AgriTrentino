@@ -1099,3 +1099,83 @@ Questo endpoint viene chiamato **automaticamente** quando un nuovo appezzamento 
     + Body
 
             { "error": "Servizio meteo non disponibile, riprova più tardi" }
+
+# Group Bilancio Idrico
+Endpoint per il calcolo e la consultazione del bilancio idrico giornaliero dell'appezzamento.
+Il bilancio idrico viene calcolato automaticamente ogni notte (cron job alle 00:30) per ogni
+appezzamento che ha:
+- Una coltura associata con fase fenologica impostata
+- Almeno 24 ore di dati meteo recenti (temperatura min/max e precipitazioni)
+Il calcolo segue il modello **FAO-56 Hargreaves-Samani semplificato**:
+1. **ET0 (evapotraspirazione di riferimento)** in mm/giorno:
+ET0 = 0.0023 × (Tmedia + 17.8) × √(Tmax - Tmin) × Ra
+
+dove `Ra` (radiazione extraterrestre) è derivata da latitudine + giorno dell'anno.
+2. **ETc (evapotraspirazione della coltura)**:
+ETc = ET0 × Kc(fase fenologica)
+
+Coefficienti Kc per la vite: gemma_dormiente 0.2, germogliamento 0.3, fioritura 0.7,
+allegagione 0.85, invaiatura 0.7, maturazione 0.4, caduta_foglie 0.2.
+3. **Bilancio giornaliero**:
+bilancio(oggi) = precipitazioniMm - ETc
+riservaIdrica(oggi) = clamp(riservaIdrica(ieri) + bilancio, 0, capacitaCampo)
+umiditaSuoloPerc = (riservaIdrica / capacitaCampo) × 100
+
+con `capacitaCampo = 150 mm` (parametro standard per vite in Trentino).
+## Bilancio idrico appezzamento [/api/v1/fields/{fieldId}/bilancio-idrico]
++ Parameters
+ + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Bilancio idrico corrente e storico [GET]
+Restituisce il bilancio idrico più recente disponibile per l'appezzamento, insieme allo storico
+degli ultimi N giorni (default 30) per visualizzazioni grafiche.
++ Request
+ + Headers
+         Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ + Parameters
+     + giorni: `30` (number, optional) - Numero di giorni di storico da restituire (default 30, max 365)
++ Response 200 (application/json)
+ + Body
+         {
+             "corrente": {
+                 "_id": "664a1b2c3d4e5f6a7b8c9d30",
+                 "appezzamentoId": "683abc123def456789",
+                 "data": "2026-05-23",
+                 "precipitazioniMm": 4.5,
+                 "evapotraspirazioneMm": 3.2,
+                 "bilancio": 1.3,
+                 "riservaIdricaMm": 87.5,
+                 "umiditaSuoloPerc": 58,
+                 "createdAt": "2026-05-23T00:30:12.000Z"
+             },
+             "storico": [
+                 {
+                     "data": "2026-05-22",
+                     "bilancio": -2.1,
+                     "riservaIdricaMm": 86.2,
+                     "umiditaSuoloPerc": 57
+                 },
+                 {
+                     "data": "2026-05-21",
+                     "bilancio": 0.5,
+                     "riservaIdricaMm": 88.3,
+                     "umiditaSuoloPerc": 59
+                 }
+             ]
+         }
++ Response 200 (application/json)
+ Nessun bilancio disponibile (campo senza coltura/fase fenologica o senza dati meteo).
+ + Body
+         {
+             "corrente": null,
+             "storico": [],
+             "message": "Bilancio idrico non ancora disponibile. Assicurati che il campo abbia una coltura con fase fenologica impostata e che siano stati raccolti dati meteo per almeno 24 ore."
+         }
++ Response 401 (application/json)
+ + Body
+         { "error": "Token mancante" }
++ Response 403 (application/json)
+ + Body
+         { "error": "Non autorizzato" }
++ Response 404 (application/json)
+ + Body
+         { "error": "Appezzamento non trovato" }
