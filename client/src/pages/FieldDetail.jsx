@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 // US22: varietà disponibili per ogni tipologia (deve restare allineato a server/constants/colture.js)
 const VARIETA_PER_TIPOLOGIA = {
@@ -66,6 +67,7 @@ export default function FieldDetail() {
   const [scheduler, setScheduler] = useState(null)
   const [cacheInfo, setCacheInfo] = useState(null)
   const [statoMeteo, setStatoMeteo] = useState(null)
+  const [storicoMeteo, setStoricoMeteo] = useState([])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -136,6 +138,28 @@ export default function FieldDetail() {
         if (oggiData?.sintesi) setSintesiOggi(oggiData.sintesi)
       })
       .finally(() => setLoadingMeteo(false))
+  }, [id])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/storico?periodoOre=48`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.dati) {
+          // Inverto l'ordine: dal più vecchio al più recente (per il grafico)
+          // E preparo un formato compatibile con Recharts
+          const datiGrafico = [...data.dati].reverse().map((d) => ({
+            ora: new Date(d.timestamp).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+            temperatura: d.temperaturaC,
+            umidita: d.umiditaPerc,
+            pioggia: d.precipitazioniMm,
+          }))
+          setStoricoMeteo(datiGrafico)
+        }
+      })
   }, [id])
 
   useEffect(() => {
@@ -493,6 +517,54 @@ export default function FieldDetail() {
                     </div>
                   </div>
                   <p className="text-xs text-gray-400 mt-2">Basato su {sintesiOggi.numeroRilevazioni} rilevazioni dalle 00:00</p>
+                </div>
+              )}
+
+              {storicoMeteo.length > 1 && (
+                <div className="mt-4 space-y-4">
+                  <p className="text-sm font-semibold text-agri-green">Andamento ultime 48 ore</p>
+
+                  {/* Grafico temperatura */}
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Temperatura (°C)</p>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <LineChart data={storicoMeteo} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="ora" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 10 }} unit="°C" />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="temperatura" stroke="#ea580c" strokeWidth={2} dot={false} name="Temperatura" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Grafico umidità */}
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Umidità relativa (%)</p>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <LineChart data={storicoMeteo} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="ora" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 10 }} unit="%" domain={[0, 100]} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="umidita" stroke="#2563eb" strokeWidth={2} dot={false} name="Umidità" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Grafico precipitazioni (barre) */}
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Precipitazioni (mm)</p>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <BarChart data={storicoMeteo} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="ora" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 10 }} unit="mm" />
+                        <Tooltip />
+                        <Bar dataKey="pioggia" fill="#06b6d4" name="Pioggia" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               )}
             </div>
