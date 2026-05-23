@@ -983,13 +983,15 @@ e viene eseguito ogni 60 minuti per impostazione predefinita.
             
 ### Storico meteo [GET /api/v1/fields/{fieldId}/meteo/storico]
 
-Restituisce le ultime 48 ore di rilevazioni meteo per l'appezzamento, ordinate dalla più recente.
+Restituisce le rilevazioni meteo per l'appezzamento nelle ultime N ore (default 48), ordinate dalla più recente. Utilizzato dalla pagina dettaglio per disegnare i grafici di andamento delle 3 grandezze (temperatura, umidità relativa, precipitazioni).
+Il parametro opzionale `periodoOre` permette di richiedere finestre più ampie (es. 168 per ultima settimana) o più strette (es. 24 per ultime 24 ore).
 
 + Request
-
     + Headers
-
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    
+    + Parameters
+        + periodoOre: `48` (number, optional) - Numero di ore di storico da restituire (default 48, max 720 = 30 giorni)
 
 + Response 200 (application/json)
 
