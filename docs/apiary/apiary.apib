@@ -1247,7 +1247,7 @@ fase attuale e la soglia per la transizione alla fase successiva.
 Endpoint per la consultazione degli indici di rischio calcolati dal sistema incrociando
 dati meteo, coltura e fase fenologica.
 In US33 è disponibile l'**indice fitosanitario per la peronospora della vite** (Plasmopara viticola).
-Il rischio climatico (US35) e la visualizzazione semaforica cliccabile (US34) arriveranno nelle US successive.
+La visualizzazione semaforica cliccabile è stata aggiunta in US34. In US35 è disponibile anche l'**indice climatico** per le minacce alpine (gelate, stress termico, eccesso di umidità) — vedi sotto.
 L'indice fitosanitario è calcolato **on-demand** sulla finestra delle ultime 48 ore:
 1. Si contano le rilevazioni meteo con condizioni favorevoli all'infezione: `umidità relativa > 80%` E `15°C <= temperatura <= 25°C`
 2. La percentuale di ore favorevoli viene pesata per la **suscettibilità della fase fenologica** (fioritura e allegagione = massima vulnerabilità)
@@ -1297,6 +1297,54 @@ con il punteggio e i componenti del calcolo sulle ultime 48 ore.
             {
                 "fitosanitario": null,
                 "message": "Indice non calcolabile: la coltura non ha una fase fenologica impostata oppure mancano dati meteo nelle ultime 48h"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+## Indice climatico appezzamento [/api/v1/fields/{fieldId}/indici/climatico]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Indice rischio climatico [GET]
+Restituisce il rischio climatico corrente per l'appezzamento, valutando tre minacce alpine
+(gelate, stress termico, eccesso di umidità) sulla finestra delle ultime 48 ore.
+Viene restituita la **minaccia con il livello più alto**, più il dettaglio di tutte e tre.
+Per le gelate il punteggio è pesato per la sensibilità al gelo della fase fenologica e per
+l'esposizione del campo (un'esposizione a nord aumenta il rischio).
+Livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "climatico": {
+                    "livello": "alto",
+                    "minaccia": "gelate",
+                    "punteggio": 100,
+                    "faseCorrente": "germogliamento",
+                    "esposizione": "Nord",
+                    "finestraOre": 48,
+                    "dettaglio": {
+                        "gelate": { "punteggio": 100, "livello": "alto", "tMinC": -3 },
+                        "stressTermico": { "punteggio": 5, "livello": "basso", "tMaxC": 12 },
+                        "eccessoUmidita": { "punteggio": 10, "livello": "basso", "percOreUmide": 5 }
+                    },
+                    "ultimoCalcolo": "2026-05-24T10:15:00.000Z"
+                }
+            }
++ Response 200 (application/json)
+    Nessun dato meteo disponibile nelle ultime 48h.
+    + Body
+            {
+                "climatico": null,
+                "message": "Indice climatico non calcolabile: mancano dati meteo nelle ultime 48h"
             }
 + Response 401 (application/json)
     + Body
