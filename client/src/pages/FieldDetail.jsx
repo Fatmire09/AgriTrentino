@@ -71,6 +71,7 @@ export default function FieldDetail() {
   const [bilancio, setBilancio] = useState(null)
   const [loadingBilancio, setLoadingBilancio] = useState(true)
   const [fenologia, setFenologia] = useState(null)
+  const [fitosanitario, setFitosanitario] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -188,6 +189,19 @@ export default function FieldDetail() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.fenologia) setFenologia(data.fenologia)
+      })
+  }, [id])
+
+  // US33: indice di rischio fitosanitario (peronospora) calcolato on-demand
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/indici/fitosanitario`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.fitosanitario) setFitosanitario(data.fitosanitario)
       })
   }, [id])
 
@@ -686,12 +700,44 @@ export default function FieldDetail() {
           )}
         </section>
 
-        {/* Placeholder: Indici di rischio */}
-        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4 opacity-60">
-          <h2 className="font-poppins font-semibold text-lg mb-2 flex items-center gap-2 text-agri-green">
+        {/* Indici di rischio — fitosanitario US33 (climatico in US35, semaforo completo in US34) */}
+        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+          <h2 className="font-poppins font-semibold text-lg mb-4 flex items-center gap-2 text-agri-green">
             <AlertTriangle className="w-5 h-5" /> Indici di rischio
           </h2>
-          <p className="text-sm text-gray-500">Disponibili dopo US34-US37 (calcolo indici fitosanitario e climatico).</p>
+
+          {!fitosanitario && (
+            <p className="text-sm text-gray-500">
+              Indice fitosanitario non disponibile. Richiede una coltura con fase fenologica impostata e dati meteo delle ultime 48 ore.
+            </p>
+          )}
+
+          {fitosanitario && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-sm font-medium text-gray-700">Rischio peronospora</span>
+                <span
+                  className="px-3 py-1 rounded-full text-sm font-semibold text-white capitalize"
+                  style={{
+                    backgroundColor:
+                      fitosanitario.livello === 'alto'
+                        ? '#dc2626'
+                        : fitosanitario.livello === 'medio'
+                        ? '#ca8a04'
+                        : '#16a34a',
+                  }}
+                >
+                  {fitosanitario.livello}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600">
+                Punteggio {fitosanitario.punteggio}/100 · {fitosanitario.oreFavorevoli}/{fitosanitario.oreAnalizzate} ore favorevoli
+                (UR &gt; {fitosanitario.soglie.urPerc}% e {fitosanitario.soglie.tempMinC}–{fitosanitario.soglie.tempMaxC} °C)
+                nelle ultime {fitosanitario.finestraOre}h
+              </p>
+              <p className="text-xs text-gray-400">Visualizzazione semaforica completa in arrivo con US34.</p>
+            </div>
+          )}
         </section>
 
         {/* Coltura corrente (US21, US22, US23, US24) */}
