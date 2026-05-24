@@ -1179,3 +1179,66 @@ degli ultimi N giorni (default 30) per visualizzazioni grafiche.
 + Response 404 (application/json)
  + Body
          { "error": "Appezzamento non trovato" }
+
+# Group Fenologia
+Endpoint per la consultazione dello stato fenologico calcolato automaticamente dal sistema.
+Il sistema usa il **modello Growing Degree Days (GDD)** per stimare l'avanzamento fenologico
+delle colture senza intervento manuale dell'utente.
+Formula:
+GDD giornaliero = max(0, Tmedia - Tbase)
+
+con `Tbase = 10°C` per la vite.
+Ogni notte all'01:00 il sistema:
+1. Per ogni coltura attiva, somma i GDD accumulati dalla `dataAggiornamento` (ultima transizione di fase) ad oggi
+2. Se i GDD superano la soglia definita per la fase corrente, la fase avanza automaticamente alla successiva
+3. La `dataAggiornamento` viene reimpostata alla data della transizione automatica
+L'utente può sempre forzare manualmente una fase tramite l'endpoint PATCH di US24, che ha precedenza sul calcolo automatico.
+## Fenologia appezzamento [/api/v1/fields/{fieldId}/fenologia]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Stato fenologico calcolato [GET]
+Restituisce lo stato fenologico corrente della coltura del campo, con i GDD accumulati nella
+fase attuale e la soglia per la transizione alla fase successiva.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "fenologia": {
+                    "colturaId": "664a1b2c3d4e5f6a7b8c9d10",
+                    "tipologia": "Vite",
+                    "varieta": "Chardonnay",
+                    "faseCorrente": "fioritura",
+                    "dataInizioFase": "2026-05-15T00:00:00.000Z",
+                    "gddAccumulati": 87.5,
+                    "fasePossibileSuccessiva": "allegagione",
+                    "sogliaGddProssima": 200,
+                    "percentualeProgresso": 44,
+                    "tBaseC": 10,
+                    "ultimoCalcolo": "2026-05-23T01:00:15.000Z"
+                }
+            }
++ Response 200 (application/json)
+    Nessuna fenologia disponibile (campo senza coltura).
+    + Body
+            {
+                "fenologia": null,
+                "message": "Nessuna coltura associata a questo appezzamento"
+            }
++ Response 200 (application/json)
+    Coltura presente ma senza fase fenologica impostata.
+    + Body
+            {
+                "fenologia": null,
+                "message": "La coltura non ha una fase fenologica impostata"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }         
