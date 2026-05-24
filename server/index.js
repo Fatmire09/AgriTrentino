@@ -10,6 +10,7 @@ const meteoRoutes = require('./routes/meteo');
 const bilancioRoutes = require('./routes/bilancio');
 const meteoScheduler = require('./services/meteoScheduler');
 const fenologiaRoutes = require('./routes/fenologia');
+const indiciRoutes = require('./routes/indici');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.use('/api/v1/fields/:fieldId/meteo', meteoRoutes);
 app.use('/api/v1/meteo', meteoRoutes);
 app.use('/api/v1/fields/:fieldId/bilancio-idrico', bilancioRoutes);
 app.use('/api/v1/fields/:fieldId/fenologia', fenologiaRoutes);
+app.use('/api/v1/fields/:fieldId/indici', indiciRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
