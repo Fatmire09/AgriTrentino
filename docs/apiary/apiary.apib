@@ -1242,3 +1242,66 @@ fase attuale e la soglia per la transizione alla fase successiva.
 + Response 404 (application/json)
     + Body
             { "error": "Appezzamento non trovato" }         
+
+# Group Indici di rischio
+Endpoint per la consultazione degli indici di rischio calcolati dal sistema incrociando
+dati meteo, coltura e fase fenologica.
+In US33 è disponibile l'**indice fitosanitario per la peronospora della vite** (Plasmopara viticola).
+Il rischio climatico (US35) e la visualizzazione semaforica cliccabile (US34) arriveranno nelle US successive.
+L'indice fitosanitario è calcolato **on-demand** sulla finestra delle ultime 48 ore:
+1. Si contano le rilevazioni meteo con condizioni favorevoli all'infezione: `umidità relativa > 80%` E `15°C <= temperatura <= 25°C`
+2. La percentuale di ore favorevoli viene pesata per la **suscettibilità della fase fenologica** (fioritura e allegagione = massima vulnerabilità)
+3. Il punteggio risultante (0-100) è mappato su tre livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66)
+## Indice fitosanitario appezzamento [/api/v1/fields/{fieldId}/indici/fitosanitario]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Indice rischio peronospora [GET]
+Restituisce il livello di rischio fitosanitario (peronospora) corrente per la coltura del campo,
+con il punteggio e i componenti del calcolo sulle ultime 48 ore.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "fitosanitario": {
+                    "patologia": "peronospora",
+                    "livello": "alto",
+                    "punteggio": 100,
+                    "faseCorrente": "fioritura",
+                    "suscettibilitaFase": 1,
+                    "oreAnalizzate": 48,
+                    "oreFavorevoli": 48,
+                    "percentualeOreFavorevoli": 100,
+                    "finestraOre": 48,
+                    "soglie": {
+                        "urPerc": 80,
+                        "tempMinC": 15,
+                        "tempMaxC": 25
+                    },
+                    "ultimoCalcolo": "2026-05-24T10:15:00.000Z"
+                }
+            }
++ Response 200 (application/json)
+    Nessuna coltura associata al campo.
+    + Body
+            {
+                "fitosanitario": null,
+                "message": "Nessuna coltura associata a questo appezzamento"
+            }
++ Response 200 (application/json)
+    Coltura senza fase fenologica oppure dati meteo insufficienti nelle ultime 48h.
+    + Body
+            {
+                "fitosanitario": null,
+                "message": "Indice non calcolabile: la coltura non ha una fase fenologica impostata oppure mancano dati meteo nelle ultime 48h"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
