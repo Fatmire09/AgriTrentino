@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const meteoService = require('./meteoService');
 const bilancioIdricoService = require('./bilancioIdricoService');
+const avanzamentoFenologicoService = require('./avanzamentoFenologicoService');
 
 // ────────────────────────────────────────────────────────────────────────────────
 // SCHEDULER METEO — US27
@@ -175,14 +176,84 @@ function getStatoBilancio() {
   return { ...statoBilancio };
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// CRON FENOLOGIA — US32
+// Ogni notte all'01:00 verifica e applica gli avanzamenti automatici delle fasi
+// ────────────────────────────────────────────────────────────────────────────────
+
+const CRON_FENOLOGIA_EXPRESSION = '0 1 * * *';
+const CRON_FENOLOGIA_DESCRIZIONE = 'Ogni notte all\'01:00';
+
+const statoFenologia = {
+  attivo: false,
+  cronExpression: CRON_FENOLOGIA_EXPRESSION,
+  descrizione: CRON_FENOLOGIA_DESCRIZIONE,
+  ultimaEsecuzione: null,
+  coltureAvanzateUltimaEsecuzione: 0,
+  coltureErroriUltimaEsecuzione: 0,
+};
+
+let taskFenologia = null;
+
+async function eseguiAvanzamentoFenologia() {
+  const inizio = new Date();
+  console.log(`[fenologia cron] Avvio avanzamento fasi alle ${inizio.toISOString()}`);
+
+  let risultato = { totaleColture: 0, avanzate: 0, errori: 0, dettagli: [] };
+  try {
+    risultato = await avanzamentoFenologicoService.avanzaFasiTutteColture();
+  } catch (err) {
+    console.error('[fenologia cron] errore globale:', err.message);
+  }
+
+  statoFenologia.ultimaEsecuzione = inizio;
+  statoFenologia.coltureAvanzateUltimaEsecuzione = risultato.avanzate;
+  statoFenologia.coltureErroriUltimaEsecuzione = risultato.errori;
+
+  if (risultato.dettagli.length > 0) {
+    for (const d of risultato.dettagli) {
+      console.log(`[fenologia cron] avanzata coltura ${d.colturaId} (campo ${d.appezzamentoId}) → nuova fase: ${d.nuovaFase}`);
+    }
+  }
+
+  const durataMs = Date.now() - inizio.getTime();
+  console.log(`[fenologia cron] Fine: ${risultato.avanzate}/${risultato.totaleColture} colture avanzate, ${risultato.errori} errori, ${durataMs}ms`);
+}
+
+function avviaCronFenologia() {
+  if (taskFenologia) return;
+  taskFenologia = cron.schedule(CRON_FENOLOGIA_EXPRESSION, eseguiAvanzamentoFenologia, {
+    scheduled: true,
+    timezone: 'Europe/Rome',
+  });
+  statoFenologia.attivo = true;
+  console.log(`[fenologia cron] Avviato con cron "${CRON_FENOLOGIA_EXPRESSION}" (${CRON_FENOLOGIA_DESCRIZIONE})`);
+}
+
+function fermaCronFenologia() {
+  if (taskFenologia) {
+    taskFenologia.stop();
+    taskFenologia = null;
+  }
+  statoFenologia.attivo = false;
+}
+
+function getStatoFenologia() {
+  return { ...statoFenologia };
+}
+
 module.exports = {
   avvia,
   ferma,
   getStato,
   eseguiAggiornamento,
-  // US31
   avviaCronBilancio,
   fermaCronBilancio,
   getStatoBilancio,
   eseguiCalcoloBilancio,
+  // US32
+  avviaCronFenologia,
+  fermaCronFenologia,
+  getStatoFenologia,
+  eseguiAvanzamentoFenologia,
 };

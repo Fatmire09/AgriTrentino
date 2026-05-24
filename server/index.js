@@ -9,6 +9,7 @@ const colturaRoutes = require('./routes/colture');
 const meteoRoutes = require('./routes/meteo');
 const bilancioRoutes = require('./routes/bilancio');
 const meteoScheduler = require('./services/meteoScheduler');
+const fenologiaRoutes = require('./routes/fenologia');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use('/api/v1/fields/:fieldId/meteo', meteoRoutes);
 // US27: endpoint meteo globali (non scoped a un singolo campo) — usa lo stesso router
 app.use('/api/v1/meteo', meteoRoutes);
 app.use('/api/v1/fields/:fieldId/bilancio-idrico', bilancioRoutes);
+app.use('/api/v1/fields/:fieldId/fenologia', fenologiaRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
@@ -36,6 +38,8 @@ app.listen(PORT, () => {
   meteoScheduler.avvia();
   // US31: avvia lo scheduler bilancio idrico
   meteoScheduler.avviaCronBilancio();
+  // US32: avvia lo scheduler fenologia
+  meteoScheduler.avviaCronFenologia();
 });
 
 module.exports = app;
