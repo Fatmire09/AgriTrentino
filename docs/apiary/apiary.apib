@@ -1252,6 +1252,7 @@ L'indice fitosanitario è calcolato **on-demand** sulla finestra delle ultime 48
 1. Si contano le rilevazioni meteo con condizioni favorevoli all'infezione: `umidità relativa > 80%` E `15°C <= temperatura <= 25°C`
 2. La percentuale di ore favorevoli viene pesata per la **suscettibilità della fase fenologica** (fioritura e allegagione = massima vulnerabilità)
 3. Il punteggio risultante (0-100) è mappato su tre livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66)
+La response include anche una **raccomandazione** operativa testuale in base al livello (aggiunta in US34).
 ## Indice fitosanitario appezzamento [/api/v1/fields/{fieldId}/indici/fitosanitario]
 + Parameters
     + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
@@ -1267,6 +1268,7 @@ con il punteggio e i componenti del calcolo sulle ultime 48 ore.
                 "fitosanitario": {
                     "patologia": "peronospora",
                     "livello": "alto",
+                    "raccomandazione": "Rischio elevato di peronospora: valuta un trattamento preventivo entro 24-48h e monitora attentamente il campo.",
                     "punteggio": 100,
                     "faseCorrente": "fioritura",
                     "suscettibilitaFase": 1,
