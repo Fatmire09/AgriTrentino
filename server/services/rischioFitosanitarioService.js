@@ -38,6 +38,17 @@ function livelloDaPunteggio(punteggio) {
   return 'basso';
 }
 
+// Raccomandazione operativa in base al livello di rischio (US34)
+function raccomandazioneDaLivello(livello) {
+  if (livello === 'alto') {
+    return 'Rischio elevato di peronospora: valuta un trattamento preventivo entro 24-48h e monitora attentamente il campo.';
+  }
+  if (livello === 'medio') {
+    return 'Rischio moderato: tieni sotto controllo l\'evoluzione meteo nei prossimi giorni e prepara un eventuale intervento.';
+  }
+  return 'Rischio basso: nessun intervento fitosanitario necessario al momento.';
+}
+
 // Conta, nella finestra, le rilevazioni totali (con dati validi) e quelle favorevoli
 async function contaOreFavorevoli(appezzamentoId, dataInizio, dataFine) {
   const dati = await DatiMeteo.find({
@@ -80,10 +91,12 @@ async function calcolaRischioFitosanitario(coltura) {
 
   const percentualeFavorevole = (favorevoli / totali) * 100;
   const punteggio = Math.round(percentualeFavorevole * suscettibilita);
+  const livello = livelloDaPunteggio(punteggio);
 
   return {
     patologia: 'peronospora',
-    livello: livelloDaPunteggio(punteggio),
+    livello,
+    raccomandazione: raccomandazioneDaLivello(livello),
     punteggio,
     faseCorrente: coltura.fase,
     suscettibilitaFase: suscettibilita,
@@ -99,6 +112,7 @@ module.exports = {
   calcolaRischioFitosanitario,
   contaOreFavorevoli,
   livelloDaPunteggio,
+  raccomandazioneDaLivello,
   SUSCETTIBILITA_PERONOSPORA,
   FINESTRA_ORE,
 };
