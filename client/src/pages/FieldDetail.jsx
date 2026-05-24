@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
+import SemaforoRischio from '../components/SemaforoRischio'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 // US22: varietà disponibili per ogni tipologia (deve restare allineato a server/constants/colture.js)
@@ -72,6 +73,7 @@ export default function FieldDetail() {
   const [loadingBilancio, setLoadingBilancio] = useState(true)
   const [fenologia, setFenologia] = useState(null)
   const [fitosanitario, setFitosanitario] = useState(null)
+  const [showFitoDetail, setShowFitoDetail] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -713,29 +715,67 @@ export default function FieldDetail() {
           )}
 
           {fitosanitario && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-sm font-medium text-gray-700">Rischio peronospora</span>
-                <span
-                  className="px-3 py-1 rounded-full text-sm font-semibold text-white capitalize"
+                <SemaforoRischio
+                  livello={fitosanitario.livello}
+                  onClick={() => setShowFitoDetail((v) => !v)}
+                />
+              </div>
+
+              {fitosanitario.raccomandazione && (
+                <div
+                  className="p-3 rounded-lg text-sm"
                   style={{
                     backgroundColor:
-                      fitosanitario.livello === 'alto'
-                        ? '#dc2626'
-                        : fitosanitario.livello === 'medio'
-                        ? '#ca8a04'
-                        : '#16a34a',
+                      fitosanitario.livello === 'alto' ? '#fef2f2'
+                        : fitosanitario.livello === 'medio' ? '#fefce8'
+                        : '#f0fdf4',
+                    color:
+                      fitosanitario.livello === 'alto' ? '#7f1d1d'
+                        : fitosanitario.livello === 'medio' ? '#713f12'
+                        : '#14532d',
                   }}
                 >
-                  {fitosanitario.livello}
-                </span>
-              </div>
-              <p className="text-xs text-gray-600">
-                Punteggio {fitosanitario.punteggio}/100 · {fitosanitario.oreFavorevoli}/{fitosanitario.oreAnalizzate} ore favorevoli
-                (UR &gt; {fitosanitario.soglie.urPerc}% e {fitosanitario.soglie.tempMinC}–{fitosanitario.soglie.tempMaxC} °C)
-                nelle ultime {fitosanitario.finestraOre}h
-              </p>
-              <p className="text-xs text-gray-400">Visualizzazione semaforica completa in arrivo con US34.</p>
+                  {fitosanitario.raccomandazione}
+                </div>
+              )}
+
+              {showFitoDetail && (
+                <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-700 space-y-2">
+                  <p className="text-sm font-semibold text-agri-green">Dettaglio modello biologico</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-gray-500">Patologia</p>
+                      <p className="font-medium capitalize">{fitosanitario.patologia}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Punteggio</p>
+                      <p className="font-medium">{fitosanitario.punteggio}/100</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Fase</p>
+                      <p className="font-medium">{fitosanitario.faseCorrente} (susc. {fitosanitario.suscettibilitaFase})</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Ore favorevoli</p>
+                      <p className="font-medium">{fitosanitario.oreFavorevoli}/{fitosanitario.oreAnalizzate}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Condizione</p>
+                      <p className="font-medium">UR &gt; {fitosanitario.soglie.urPerc}% · {fitosanitario.soglie.tempMinC}–{fitosanitario.soglie.tempMaxC} °C</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Finestra</p>
+                      <p className="font-medium">{fitosanitario.finestraOre}h</p>
+                    </div>
+                  </div>
+                  {fitosanitario.ultimoCalcolo && (
+                    <p className="text-gray-400">Calcolato il {new Date(fitosanitario.ultimoCalcolo).toLocaleString('it-IT')}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </section>
