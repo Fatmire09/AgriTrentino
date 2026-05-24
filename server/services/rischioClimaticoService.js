@@ -93,6 +93,20 @@ function punteggioEccessoUmidita(oreUmide, totaliUmidita) {
   return 10;
 }
 
+// Descrizione testuale della minaccia dominante (US36) — usata dal tooltip in UI
+function descrizioneMinaccia(minaccia) {
+  switch (minaccia) {
+    case 'gelate':
+      return 'Gelate: rischio di danni da freddo a germogli e fiori (tipico delle gelate tardive primaverili).';
+    case 'stress_termico':
+      return 'Stress termico: temperature elevate che possono causare scottature e blocco vegetativo.';
+    case 'eccesso_umidita':
+      return 'Eccesso di umidità: ristagni prolungati che favoriscono lo sviluppo di malattie fungine.';
+    default:
+      return 'Nessuna minaccia climatica rilevante al momento.';
+  }
+}
+
 // Calcola l'indice climatico per un campo (coltura/fase opzionale). On-demand, nessuna persistenza.
 // Ritorna null se non ci sono dati meteo nella finestra.
 async function calcolaRischioClimatico(field, coltura) {
@@ -117,10 +131,12 @@ async function calcolaRischioClimatico(field, coltura) {
     { minaccia: 'eccesso_umidita', punteggio: pUmidita },
   ];
   const dominante = minacce.reduce((a, b) => (b.punteggio > a.punteggio ? b : a));
+  const minaccia = dominante.punteggio === 0 ? 'nessuna' : dominante.minaccia;
 
   return {
     livello: livelloDaPunteggio(dominante.punteggio),
-    minaccia: dominante.punteggio === 0 ? 'nessuna' : dominante.minaccia,
+    minaccia,
+    descrizione: descrizioneMinaccia(minaccia),
     punteggio: dominante.punteggio,
     faseCorrente: fase,
     esposizione: field.esposizione || null,
@@ -135,6 +151,7 @@ async function calcolaRischioClimatico(field, coltura) {
 
 module.exports = {
   calcolaRischioClimatico,
+  descrizioneMinaccia,
   punteggioGelate,
   punteggioStressTermico,
   punteggioEccessoUmidita,
