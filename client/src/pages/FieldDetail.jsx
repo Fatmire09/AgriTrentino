@@ -813,6 +813,7 @@ export default function FieldDetail() {
                 </span>
                 <SemaforoRischio
                   livello={climatico.livello}
+                  tooltip={climatico.descrizione}
                   onClick={() => setShowClimaDetail((v) => !v)}
                 />
               </div>
