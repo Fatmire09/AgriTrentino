@@ -4,6 +4,7 @@ const requireAuth = require('../middleware/auth');
 const Field = require('../models/Field');
 const Coltura = require('../models/Coltura');
 const rischioFitosanitarioService = require('../services/rischioFitosanitarioService');
+const rischioClimaticoService = require('../services/rischioClimaticoService');
 
 // Helper: trova il campo e verifica che appartenga all'utente autenticato
 async function trovaCampoAutorizzato(req, res) {
@@ -45,6 +46,35 @@ router.get('/fitosanitario', requireAuth, async (req, res) => {
 
     return res.status(200).json({
       fitosanitario: { ...indice, ultimoCalcolo: new Date() },
+    });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+// GET /api/v1/fields/:fieldId/indici/climatico
+// Indice di rischio climatico (gelate, stress termico, eccesso umidità) on-demand sulle ultime 48h
+router.get('/climatico', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    // Coltura corrente: la fase modula la sensibilità al gelo (può non esserci)
+    const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
+
+    const indice = await rischioClimaticoService.calcolaRischioClimatico(field, coltura);
+    if (!indice) {
+      return res.status(200).json({
+        climatico: null,
+        message: 'Indice climatico non calcolabile: mancano dati meteo nelle ultime 48h',
+      });
+    }
+
+    return res.status(200).json({
+      climatico: { ...indice, ultimoCalcolo: new Date() },
     });
   } catch (err) {
     if (err.name === 'CastError') {
