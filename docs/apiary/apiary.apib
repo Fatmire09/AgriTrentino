@@ -1318,6 +1318,7 @@ Viene restituita la **minaccia con il livello più alto**, più il dettaglio di 
 Per le gelate il punteggio è pesato per la sensibilità al gelo della fase fenologica e per
 l'esposizione del campo (un'esposizione a nord aumenta il rischio).
 Livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66).
+La response include anche una `descrizione` testuale della minaccia (usata come tooltip in UI, US36).
 + Request
     + Headers
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -1327,6 +1328,7 @@ Livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66).
                 "climatico": {
                     "livello": "alto",
                     "minaccia": "gelate",
+                    "descrizione": "Gelate: rischio di danni da freddo a germogli e fiori (tipico delle gelate tardive primaverili).",
                     "punteggio": 100,
                     "faseCorrente": "germogliamento",
                     "esposizione": "Nord",
