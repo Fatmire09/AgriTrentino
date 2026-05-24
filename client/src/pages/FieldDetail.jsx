@@ -70,6 +70,7 @@ export default function FieldDetail() {
   const [storicoMeteo, setStoricoMeteo] = useState([])
   const [bilancio, setBilancio] = useState(null)
   const [loadingBilancio, setLoadingBilancio] = useState(true)
+  const [fenologia, setFenologia] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -175,6 +176,19 @@ export default function FieldDetail() {
         if (data?.corrente) setBilancio(data.corrente)
       })
       .finally(() => setLoadingBilancio(false))
+  }, [id])
+
+  // US32: stato fenologico calcolato (GDD accumulati + soglia prossima)
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/fenologia`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.fenologia) setFenologia(data.fenologia)
+      })
   }, [id])
 
   useEffect(() => {
@@ -714,6 +728,30 @@ export default function FieldDetail() {
                   <p className="text-sm text-gray-700 mt-1">
                     <span className="font-medium">Fase fenologica:</span> {ETICHETTE_FASI[colture[0].fase] || colture[0].fase}
                   </p>
+                )}
+                {fenologia && colture[0].fase && (
+                  <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Sprout className="w-3.5 h-3.5 text-agri-green flex-shrink-0" />
+                      <span
+                        className="text-agri-green font-semibold cursor-help"
+                        title={`GDD accumulati nella fase: ${fenologia.gddAccumulati} / ${fenologia.sogliaGddProssima} (Tbase ${fenologia.tBaseC}°C)\nProssima fase: ${ETICHETTE_FASI[fenologia.fasePossibileSuccessiva] || fenologia.fasePossibileSuccessiva}\nUltimo calcolo: ${new Date(fenologia.ultimoCalcolo).toLocaleString('it-IT')}`}
+                      >
+                        Fase aggiornata automaticamente il {new Date(colture[0].dataAggiornamento).toLocaleDateString('it-IT')}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-agri-green rounded-full transition-all"
+                        style={{ width: `${fenologia.percentualeProgresso}%` }}
+                      />
+                    </div>
+                    <p className="text-gray-600 mt-1">
+                      {fenologia.gddAccumulati} / {fenologia.sogliaGddProssima} GDD verso{' '}
+                      <span className="font-medium">{ETICHETTE_FASI[fenologia.fasePossibileSuccessiva] || fenologia.fasePossibileSuccessiva}</span>{' '}
+                      ({fenologia.percentualeProgresso}%)
+                    </p>
+                  </div>
                 )}
                 <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
                   <p className="text-xs text-gray-500">
