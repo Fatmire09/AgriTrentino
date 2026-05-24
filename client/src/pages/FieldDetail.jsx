@@ -26,6 +26,14 @@ const ETICHETTE_FASI = {
   caduta_foglie: 'Caduta foglie',
 }
 
+// US35: etichette user-friendly per le minacce climatiche
+const ETICHETTE_MINACCIA = {
+  gelate: 'Gelate',
+  stress_termico: 'Stress termico',
+  eccesso_umidita: 'Eccesso di umidità',
+  nessuna: 'Nessuna minaccia',
+}
+
 // US26: trasforma un timestamp in stringa relativa ("3 min fa", "2 ore fa", ecc.)
 function formatTempoTrascorso(timestamp) {
   const minuti = Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000)
@@ -74,6 +82,8 @@ export default function FieldDetail() {
   const [fenologia, setFenologia] = useState(null)
   const [fitosanitario, setFitosanitario] = useState(null)
   const [showFitoDetail, setShowFitoDetail] = useState(false)
+  const [climatico, setClimatico] = useState(null)
+  const [showClimaDetail, setShowClimaDetail] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -204,6 +214,19 @@ export default function FieldDetail() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.fitosanitario) setFitosanitario(data.fitosanitario)
+      })
+  }, [id])
+
+  // US35: indice di rischio climatico (gelate / stress termico / eccesso umidità)
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/indici/climatico`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.climatico) setClimatico(data.climatico)
       })
   }, [id])
 
@@ -708,9 +731,9 @@ export default function FieldDetail() {
             <AlertTriangle className="w-5 h-5" /> Indici di rischio
           </h2>
 
-          {!fitosanitario && (
+          {!fitosanitario && !climatico && (
             <p className="text-sm text-gray-500">
-              Indice fitosanitario non disponibile. Richiede una coltura con fase fenologica impostata e dati meteo delle ultime 48 ore.
+              Indici di rischio non disponibili. Richiedono dati meteo recenti e, per il fitosanitario, una coltura con fase fenologica impostata.
             </p>
           )}
 
@@ -774,6 +797,52 @@ export default function FieldDetail() {
                   {fitosanitario.ultimoCalcolo && (
                     <p className="text-gray-400">Calcolato il {new Date(fitosanitario.ultimoCalcolo).toLocaleString('it-IT')}</p>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {climatico && (
+            <div className="space-y-3 pt-4 mt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-sm font-medium text-gray-700">
+                  Rischio climatico
+                  {climatico.minaccia !== 'nessuna' && (
+                    <span className="text-gray-500"> · {ETICHETTE_MINACCIA[climatico.minaccia] || climatico.minaccia}</span>
+                  )}
+                </span>
+                <SemaforoRischio
+                  livello={climatico.livello}
+                  onClick={() => setShowClimaDetail((v) => !v)}
+                />
+              </div>
+
+              {showClimaDetail && (
+                <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-700 space-y-2">
+                  <p className="text-sm font-semibold text-agri-green">Dettaglio minacce climatiche</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-gray-500">Gelate</p>
+                      <p className="font-medium capitalize">
+                        {climatico.dettaglio.gelate.livello} · Tmin {climatico.dettaglio.gelate.tMinC ?? '—'} °C
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Stress termico</p>
+                      <p className="font-medium capitalize">
+                        {climatico.dettaglio.stressTermico.livello} · Tmax {climatico.dettaglio.stressTermico.tMaxC ?? '—'} °C
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Eccesso umidità</p>
+                      <p className="font-medium capitalize">
+                        {climatico.dettaglio.eccessoUmidita.livello} · {climatico.dettaglio.eccessoUmidita.percOreUmide}% ore UR&gt;90%
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-gray-400">
+                    Esposizione {climatico.esposizione || 'n/d'} · fase {climatico.faseCorrente || 'n/d'} · finestra {climatico.finestraOre}h
+                  </p>
                 </div>
               )}
             </div>
