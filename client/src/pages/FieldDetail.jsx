@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SemaforoRischio from '../components/SemaforoRischio'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 
 // US22: varietà disponibili per ogni tipologia (deve restare allineato a server/constants/colture.js)
 const VARIETA_PER_TIPOLOGIA = {
@@ -78,6 +78,7 @@ export default function FieldDetail() {
   const [statoMeteo, setStatoMeteo] = useState(null)
   const [storicoMeteo, setStoricoMeteo] = useState([])
   const [bilancio, setBilancio] = useState(null)
+  const [storicoIndici, setStoricoIndici] = useState([])
   const [loadingBilancio, setLoadingBilancio] = useState(true)
   const [fenologia, setFenologia] = useState(null)
   const [fitosanitario, setFitosanitario] = useState(null)
@@ -189,6 +190,28 @@ export default function FieldDetail() {
         if (data?.corrente) setBilancio(data.corrente)
       })
       .finally(() => setLoadingBilancio(false))
+  }, [id])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:3001/api/v1/fields/${id}/indici/storico?giorni=365`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.storico) {
+          // Trasforma per Recharts: unisci fito + clima per stessa data
+          const perData = {}
+          for (const r of data.storico) {
+            const giorno = new Date(r.data).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' })
+            if (!perData[giorno]) perData[giorno] = { data: giorno }
+            if (r.tipoRischio === 'fitosanitario') perData[giorno].fitosanitario = r.valore
+            if (r.tipoRischio === 'climatico') perData[giorno].climatico = r.valore
+          }
+          setStoricoIndici(Object.values(perData))
+        }
+      })
   }, [id])
 
   // US32: stato fenologico calcolato (GDD accumulati + soglia prossima)
@@ -1047,6 +1070,30 @@ export default function FieldDetail() {
             </div>
           )}
         </section>
+
+        {/* Storico indici 12 mesi (US40) */}
+        {storicoIndici.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+            <h2 className="font-poppins font-semibold text-lg mb-4 flex items-center gap-2 text-agri-green">
+              <TrendingUp className="w-5 h-5" /> Storico indici di rischio (12 mesi)
+            </h2>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={storicoIndici} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="data" tick={{ fontSize: 9 }} interval={29} />
+                <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="fitosanitario" stroke="#dc2626" strokeWidth={1.5} dot={false} name="Fitosanitario" />
+                <Line type="monotone" dataKey="climatico" stroke="#2563eb" strokeWidth={1.5} dot={false} name="Climatico" />
+              </LineChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-gray-500 mt-2">
+              Andamento giornaliero dei punteggi di rischio (0-100) nelle ultime 52 settimane.
+              Soglie: <span className="text-green-600">basso &lt; 33</span> · <span className="text-yellow-600">medio 33-65</span> · <span className="text-red-600">alto ≥ 66</span>
+            </p>
+          </section>
+        )}
 
         {/* Placeholder: Storico interventi */}
         <section className="bg-white rounded-2xl shadow-sm p-6 opacity-60">
