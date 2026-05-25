@@ -1357,3 +1357,51 @@ La response include anche una `descrizione` testuale della minaccia (usata come 
 + Response 404 (application/json)
     + Body
             { "error": "Appezzamento non trovato" }
+
+# Group Notifiche
+Endpoint per la consultazione delle notifiche in-app generate automaticamente dal sistema (US37).
+Ogni notte alle 02:00 un cron valuta gli indici di rischio (fitosanitario e climatico) di tutti i
+campi dell'utente e crea una notifica quando un indice raggiunge il livello **alto**.
+Per evitare spam, non viene creata una nuova notifica se ne esiste già una **non letta** per lo stesso
+campo e tipo di rischio.
+## Notifiche utente [/api/v1/notifiche]
+### Elenco notifiche [GET]
+Restituisce le notifiche dell'utente autenticato (le più recenti per prime, max 100) e il conteggio
+di quelle non ancora lette.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "notifiche": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d40",
+                        "userId": "664a1b2c3d4e5f6a7b8c9d00",
+                        "appezzamentoId": "683abc123def456789",
+                        "campoNome": "Vigneto Sud",
+                        "tipoRischio": "fitosanitario",
+                        "minaccia": "peronospora",
+                        "livello": "alto",
+                        "messaggio": "Rischio fitosanitario ALTO (peronospora) sul campo \"Vigneto Sud\".",
+                        "letta": false,
+                        "createdAt": "2026-05-24T02:00:05.000Z"
+                    },
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d41",
+                        "userId": "664a1b2c3d4e5f6a7b8c9d00",
+                        "appezzamentoId": "683abc123def456790",
+                        "campoNome": "Vigneto Nord",
+                        "tipoRischio": "climatico",
+                        "minaccia": "gelate",
+                        "livello": "alto",
+                        "messaggio": "Rischio climatico ALTO (gelate) sul campo \"Vigneto Nord\".",
+                        "letta": false,
+                        "createdAt": "2026-05-24T02:00:06.000Z"
+                    }
+                ],
+                "nonLette": 2
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
