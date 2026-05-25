@@ -34,6 +34,29 @@ export default function Navbar() {
       })
   }
 
+  // US39: marca una notifica come letta
+  const marcaComeLetta = async (notificaId) => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/notifiche/${notificaId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ letta: true }),
+      })
+      if (res.ok) {
+        // Aggiorno stato locale: la notifica diventa letta
+        setNotifiche((prev) =>
+          prev.map((n) => (n._id === notificaId ? { ...n, letta: true } : n))
+        )
+        // Decremento counter non lette (se era ancora non letta)
+        setNonLette((prev) => Math.max(0, prev - 1))
+      }
+    } catch {
+      // silenzioso, gestione errori semplificata
+    }
+  }
+
   // US38: helper per "X minuti fa"
   const tempoFa = (timestamp) => {
     const min = Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000)
@@ -145,7 +168,8 @@ export default function Navbar() {
                   {notifiche.map((n) => (
                     <li
                       key={n._id}
-                      className={`px-4 py-3 text-sm hover:bg-gray-50 ${!n.letta ? 'bg-yellow-50' : ''}`}
+                      onClick={() => !n.letta && marcaComeLetta(n._id)}
+                      className={`px-4 py-3 text-sm hover:bg-gray-50 ${!n.letta ? 'bg-yellow-50 cursor-pointer' : ''}`}
                     >
                       <div className="flex items-start gap-2">
                         <AlertTriangle
