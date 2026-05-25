@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const meteoService = require('./meteoService');
 const bilancioIdricoService = require('./bilancioIdricoService');
 const avanzamentoFenologicoService = require('./avanzamentoFenologicoService');
+const notificheService = require('./notificheService');
 
 // ────────────────────────────────────────────────────────────────────────────────
 // SCHEDULER METEO — US27
@@ -242,6 +243,65 @@ function getStatoFenologia() {
   return { ...statoFenologia };
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// CRON NOTIFICHE — US37
+// Ogni notte alle 02:00 valuta gli indici di tutti i campi e genera notifiche
+// per i rischi di livello "alto"
+// ────────────────────────────────────────────────────────────────────────────────
+
+const CRON_NOTIFICHE_EXPRESSION = '0 2 * * *';
+const CRON_NOTIFICHE_DESCRIZIONE = 'Ogni notte alle 02:00';
+
+const statoNotifiche = {
+  attivo: false,
+  cronExpression: CRON_NOTIFICHE_EXPRESSION,
+  descrizione: CRON_NOTIFICHE_DESCRIZIONE,
+  ultimaEsecuzione: null,
+  notificheCreateUltimaEsecuzione: 0,
+};
+
+let taskNotifiche = null;
+
+async function eseguiGenerazioneNotifiche() {
+  const inizio = new Date();
+  console.log(`[notifiche cron] Avvio generazione notifiche alle ${inizio.toISOString()}`);
+
+  let risultato = { totaleCampi: 0, create: 0, errori: 0 };
+  try {
+    risultato = await notificheService.generaNotifiche();
+  } catch (err) {
+    console.error('[notifiche cron] errore globale:', err.message);
+  }
+
+  statoNotifiche.ultimaEsecuzione = inizio;
+  statoNotifiche.notificheCreateUltimaEsecuzione = risultato.create;
+
+  const durataMs = Date.now() - inizio.getTime();
+  console.log(`[notifiche cron] Fine: ${risultato.create} notifiche create su ${risultato.totaleCampi} campi, ${risultato.errori} errori, ${durataMs}ms`);
+}
+
+function avviaCronNotifiche() {
+  if (taskNotifiche) return;
+  taskNotifiche = cron.schedule(CRON_NOTIFICHE_EXPRESSION, eseguiGenerazioneNotifiche, {
+    scheduled: true,
+    timezone: 'Europe/Rome',
+  });
+  statoNotifiche.attivo = true;
+  console.log(`[notifiche cron] Avviato con cron "${CRON_NOTIFICHE_EXPRESSION}" (${CRON_NOTIFICHE_DESCRIZIONE})`);
+}
+
+function fermaCronNotifiche() {
+  if (taskNotifiche) {
+    taskNotifiche.stop();
+    taskNotifiche = null;
+  }
+  statoNotifiche.attivo = false;
+}
+
+function getStatoNotifiche() {
+  return { ...statoNotifiche };
+}
+
 module.exports = {
   avvia,
   ferma,
@@ -256,4 +316,9 @@ module.exports = {
   fermaCronFenologia,
   getStatoFenologia,
   eseguiAvanzamentoFenologia,
+  // US37
+  avviaCronNotifiche,
+  fermaCronNotifiche,
+  getStatoNotifiche,
+  eseguiGenerazioneNotifiche,
 };
