@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Leaf } from 'lucide-react'
+import { Menu, X, Leaf, Bell } from 'lucide-react'
 
 const navLinks = [
   { label: 'Necessità', href: '#chi-siamo' },
@@ -11,10 +11,25 @@ const navLinks = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [nonLette, setNonLette] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem('token'))
+  }, [])
+
+  // US37: conteggio notifiche non lette per il badge del campanello
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch('http://localhost:3001/api/v1/notifiche', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.nonLette === 'number') setNonLette(data.nonLette)
+      })
+      .catch(() => {})
   }, [])
 
   const handleLogout = async () => {
@@ -60,6 +75,18 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
   <>
+    <button
+      type="button"
+      title="Notifiche"
+      className="relative p-2 rounded-lg text-agri-green hover:bg-green-50 transition"
+    >
+      <Bell className="w-5 h-5" />
+      {nonLette > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
+          {nonLette > 9 ? '9+' : nonLette}
+        </span>
+      )}
+    </button>
     <Link
       to="/fields"
       className="px-4 py-2 rounded-lg text-agri-green text-sm font-semibold hover:opacity-80 transition text-center"
