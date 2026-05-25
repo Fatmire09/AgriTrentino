@@ -1412,3 +1412,69 @@ La response include il conteggio `nonLette` che rappresenta TUTTE le notifiche n
 + Response 401 (application/json)
     + Body
             { "error": "Token mancante" }
+
+## Notifica singola [/api/v1/notifiche/{id}]
+
++ Parameters
+    + id: `664a1b2c3d4e5f6a7b8c9d40` (string, required) - ID MongoDB della notifica
+
+### Marca notifica come letta [PATCH]
+
+Marca una notifica come letta. L'utente può marcare come letta solo le proprie notifiche.
+L'operazione è idempotente: marcare come letta una notifica già letta restituisce comunque 200.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "letta": true
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Notifica marcata come letta",
+                "notifica": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d40",
+                    "appezzamentoId": "683abc123def456789",
+                    "campoNome": "Vigneto Cembra",
+                    "tipoRischio": "fitosanitario",
+                    "minaccia": "peronospora",
+                    "livello": "alto",
+                    "messaggio": "Rischio fitosanitario alto per peronospora",
+                    "letta": true,
+                    "createdAt": "2026-05-24T08:00:00.000Z",
+                    "updatedAt": "2026-05-24T10:15:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "ID non valido" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Notifica non trovata" }
