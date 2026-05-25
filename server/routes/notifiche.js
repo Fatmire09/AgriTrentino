@@ -22,4 +22,31 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
+// US39: PATCH /api/v1/notifiche/:id — marca notifica come letta
+router.patch('/:id', requireAuth, async (req, res) => {
+  try {
+    const notifica = await Notifica.findById(req.params.id);
+    if (!notifica) {
+      return res.status(404).json({ error: 'Notifica non trovata' });
+    }
+    if (notifica.userId.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+    notifica.letta = true;
+    await notifica.save();
+
+    // Escludo userId e __v dalla response
+    const notificaPulita = await Notifica.findById(notifica._id).select('-userId -__v');
+
+    return res.status(200).json({
+      message: 'Notifica marcata come letta',
+      notifica: notificaPulita,
+    });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
 module.exports = router;
