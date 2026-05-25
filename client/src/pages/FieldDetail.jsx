@@ -743,6 +743,7 @@ export default function FieldDetail() {
                 <span className="text-sm font-medium text-gray-700">Rischio peronospora</span>
                 <SemaforoRischio
                   livello={fitosanitario.livello}
+                  tooltip="Peronospora: rischio di infezione fungina stimato da umidità e temperatura delle ultime 48h, pesato per la fase fenologica."
                   onClick={() => setShowFitoDetail((v) => !v)}
                 />
               </div>
