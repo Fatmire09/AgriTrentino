@@ -1308,6 +1308,71 @@ con il punteggio e i componenti del calcolo sulle ultime 48 ore.
     + Body
             { "error": "Appezzamento non trovato" }
 
+
+## Storico indici di rischio [/api/v1/fields/{fieldId}/indici/storico]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Serie storica indici [GET]
+
+Restituisce la serie storica degli indici di rischio fitosanitario e climatico per
+l'appezzamento, con risoluzione giornaliera. Default ultimi 12 mesi (365 giorni).
+
+Utile per visualizzare l'andamento stagionale dei rischi e identificare pattern
+ricorrenti anno su anno.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Parameters
+        + giorni: `365` (number, optional) - Numero di giorni di storico (default 365, max 730 = 2 anni)
+        + tipo: `fitosanitario` (string, optional) - Filtra per tipoRischio (`fitosanitario` o `climatico`). Se omesso restituisce entrambi.
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "storico": [
+                    {
+                        "data": "2025-05-24",
+                        "tipoRischio": "fitosanitario",
+                        "livello": "basso",
+                        "valore": 22
+                    },
+                    {
+                        "data": "2025-05-24",
+                        "tipoRischio": "climatico",
+                        "livello": "medio",
+                        "valore": 45
+                    }
+                ],
+                "totaleRecord": 730,
+                "periodoGiorni": 365
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
 ## Indice climatico appezzamento [/api/v1/fields/{fieldId}/indici/climatico]
 + Parameters
     + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
