@@ -14,6 +14,7 @@ import AddField from './pages/AddField'
 import FieldsList from './pages/FieldsList'
 import FieldDetail from './pages/FieldDetail'
 import EditField from './pages/EditField'
+import Dashboard from './pages/Dashboard'
 
 
 export default function App() {
@@ -41,7 +42,7 @@ export default function App() {
         <Route path="/fields/:id" element={<FieldDetail />} />
         <Route path="/fields/new" element={<AddField />} />
         <Route path="/fields/:id/edit" element={<EditField />} />
-	
+        <Route path="/dashboard" element={<Dashboard />} />
 
       </Routes>
     </BrowserRouter>
