@@ -46,4 +46,24 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// US42: GET /api/v1/fields/:fieldId/interventi — lista interventi del campo
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    const interventi = await Intervento.find({ appezzamentoId: field._id })
+      .sort({ dataOra: -1 })
+      .limit(50)
+      .lean();
+
+    return res.json({ interventi });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
