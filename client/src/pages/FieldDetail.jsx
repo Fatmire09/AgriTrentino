@@ -85,6 +85,8 @@ export default function FieldDetail() {
   const [loadingInterventi, setLoadingInterventi] = useState(true)
   const [showAddIntervento, setShowAddIntervento] = useState(false)
   const [editingInterventoId, setEditingInterventoId] = useState(null)
+  const [interventoToDelete, setInterventoToDelete] = useState(null)
+  const [deletingIntervento, setDeletingIntervento] = useState(false)
   const [interventoForm, setInterventoForm] = useState({
     tipologia: 'trattamento',
     dataOra: new Date().toISOString().slice(0, 16), // formato per <input type="datetime-local">
@@ -421,6 +423,24 @@ export default function FieldDetail() {
       setConfirmOpen(false)
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleDeleteIntervento = async () => {
+    if (!interventoToDelete) return
+    setDeletingIntervento(true)
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi/${interventoToDelete._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setInterventoToDelete(null)
+        fetchInterventi()
+      }
+    } catch { /* silenzioso */ } finally {
+      setDeletingIntervento(false)
     }
   }
 
@@ -1423,6 +1443,13 @@ export default function FieldDetail() {
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
+                      <button
+                        onClick={() => setInterventoToDelete(iv)}
+                        className="flex-shrink-0 text-red-500 hover:opacity-70 p-1"
+                        title="Elimina intervento"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -1441,6 +1468,17 @@ export default function FieldDetail() {
           destructive
           onConfirm={handleDelete}
           onCancel={() => !deleting && setConfirmOpen(false)}
+        />
+
+        <ConfirmDialog
+          open={!!interventoToDelete}
+          title="Eliminare questo intervento?"
+          message="L'intervento verrà rimosso dal registro in modo definitivo. Questa azione non può essere annullata."
+          confirmLabel={deletingIntervento ? 'Eliminazione...' : 'Sì, elimina'}
+          cancelLabel="Annulla"
+          destructive
+          onConfirm={handleDeleteIntervento}
+          onCancel={() => !deletingIntervento && setInterventoToDelete(null)}
         />
       </div>
     </div>
