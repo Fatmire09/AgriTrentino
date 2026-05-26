@@ -3,6 +3,7 @@ const router = express.Router({ mergeParams: true });
 const requireAuth = require('../middleware/auth');
 const Field = require('../models/Field');
 const Intervento = require('../models/Intervento');
+const { classificaIntervento } = require('../services/classificazioneInterventoService');
 
 // Helper auth+ownership
 async function trovaCampoAutorizzato(req, res) {
@@ -30,9 +31,12 @@ router.post('/', requireAuth, async (req, res) => {
     });
     await intervento.save();
 
+    // US43: feedback immediato sulla classificazione
+    const { classificazione, livello } = await classificaIntervento(intervento);
+
     return res.status(201).json({
       message: 'Intervento registrato con successo',
-      intervento,
+      intervento: { ...intervento.toObject(), classificazione, livello },
     });
   } catch (err) {
     if (err.name === 'CastError') {
@@ -57,7 +61,14 @@ router.get('/', requireAuth, async (req, res) => {
       .limit(50)
       .lean();
 
-    return res.json({ interventi });
+    // US43: classifica ogni intervento in base al rischio della sua data
+    const interventiClassificati = [];
+    for (const intervento of interventi) {
+      const { classificazione, livello } = await classificaIntervento(intervento);
+      interventiClassificati.push({ ...intervento, classificazione, livello });
+    }
+
+    return res.json({ interventi: interventiClassificati });
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'ID non valido' });
