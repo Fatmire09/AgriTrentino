@@ -84,6 +84,7 @@ export default function FieldDetail() {
   const [filtroGiorni, setFiltroGiorni] = useState('')
   const [loadingInterventi, setLoadingInterventi] = useState(true)
   const [showAddIntervento, setShowAddIntervento] = useState(false)
+  const [editingInterventoId, setEditingInterventoId] = useState(null)
   const [interventoForm, setInterventoForm] = useState({
     tipologia: 'trattamento',
     dataOra: new Date().toISOString().slice(0, 16), // formato per <input type="datetime-local">
@@ -423,6 +424,22 @@ export default function FieldDetail() {
     }
   }
 
+  const handleEditIntervento = (iv) => {
+    setEditingInterventoId(iv._id)
+    setInterventoForm({
+      tipologia: iv.tipologia,
+      dataOra: new Date(iv.dataOra).toISOString().slice(0, 16),
+      principioAttivo: iv.principioAttivo || '',
+      quantita: iv.quantita ?? '',
+      unitaMisura: iv.unitaMisura || 'kg/ha',
+      volumeAcqua: iv.volumeAcqua ?? '',
+      note: iv.note || '',
+    })
+    setInterventoError('')
+    setInterventoSuccess('')
+    setShowAddIntervento(true)
+  }
+
   const handleSaveIntervento = async () => {
     setSavingIntervento(true)
     setInterventoError('')
@@ -442,16 +459,21 @@ export default function FieldDetail() {
         }),
         note: interventoForm.note,
       }
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi`, {
-        method: 'POST',
+      const isEdit = !!editingInterventoId
+      const url = isEdit
+        ? `http://localhost:3001/api/v1/fields/${id}/interventi/${editingInterventoId}`
+        : `http://localhost:3001/api/v1/fields/${id}/interventi`
+      const res = await fetch(url, {
+        method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       })
       const data = await res.json()
       if (res.ok) {
-        setInterventoSuccess('Intervento registrato con successo')
+        setInterventoSuccess(isEdit ? 'Intervento aggiornato con successo' : 'Intervento registrato con successo')
         fetchInterventi()
         setShowAddIntervento(false)
+        setEditingInterventoId(null)
         setInterventoForm({
           tipologia: 'trattamento',
           dataOra: new Date().toISOString().slice(0, 16),
@@ -1244,7 +1266,7 @@ export default function FieldDetail() {
                   value={interventoForm.tipologia}
                   onChange={(e) => setInterventoForm({ ...interventoForm, tipologia: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  disabled={savingIntervento}
+                  disabled={savingIntervento || !!editingInterventoId}
                 >
                   <option value="trattamento">Trattamento fitosanitario</option>
                   <option value="irrigazione">Irrigazione</option>
@@ -1337,7 +1359,12 @@ export default function FieldDetail() {
 
               <div className="flex gap-2 justify-end">
                 <button
-                  onClick={() => { setShowAddIntervento(false); setInterventoError('') }}
+                  onClick={() => {
+                    setShowAddIntervento(false)
+                    setInterventoError('')
+                    setEditingInterventoId(null)
+                    setInterventoForm({ tipologia: 'trattamento', dataOra: new Date().toISOString().slice(0, 16), principioAttivo: '', quantita: '', unitaMisura: 'kg/ha', volumeAcqua: '', note: '' })
+                  }}
                   disabled={savingIntervento}
                   className="px-3 py-1.5 rounded-lg border-2 border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-100"
                 >
@@ -1348,7 +1375,7 @@ export default function FieldDetail() {
                   disabled={savingIntervento}
                   className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
                 >
-                  {savingIntervento ? 'Salvataggio...' : 'Registra'}
+                  {savingIntervento ? 'Salvataggio...' : (editingInterventoId ? 'Salva modifiche' : 'Registra')}
                 </button>
               </div>
             </div>
@@ -1389,6 +1416,13 @@ export default function FieldDetail() {
                           {iv.classificazione}{iv.livello ? ` · ${iv.livello}` : ''}
                         </span>
                       )}
+                      <button
+                        onClick={() => handleEditIntervento(iv)}
+                        className="flex-shrink-0 text-agri-green hover:opacity-70 p-1"
+                        title="Modifica intervento"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                     </li>
                   ))}
                 </ul>
