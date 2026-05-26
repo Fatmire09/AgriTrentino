@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet } from 'lucide-react'
+import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet, Pill, Calendar } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SemaforoRischio from '../components/SemaforoRischio'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
@@ -79,6 +79,18 @@ export default function FieldDetail() {
   const [storicoMeteo, setStoricoMeteo] = useState([])
   const [bilancio, setBilancio] = useState(null)
   const [storicoIndici, setStoricoIndici] = useState([])
+  const [showAddIntervento, setShowAddIntervento] = useState(false)
+  const [interventoForm, setInterventoForm] = useState({
+    tipologia: 'trattamento',
+    dataOra: new Date().toISOString().slice(0, 16), // formato per <input type="datetime-local">
+    principioAttivo: '',
+    quantita: '',
+    unitaMisura: 'kg/ha',
+    note: '',
+  })
+  const [savingIntervento, setSavingIntervento] = useState(false)
+  const [interventoError, setInterventoError] = useState('')
+  const [interventoSuccess, setInterventoSuccess] = useState('')
   const [loadingBilancio, setLoadingBilancio] = useState(true)
   const [fenologia, setFenologia] = useState(null)
   const [fitosanitario, setFitosanitario] = useState(null)
@@ -379,6 +391,47 @@ export default function FieldDetail() {
       setConfirmOpen(false)
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleSaveIntervento = async () => {
+    setSavingIntervento(true)
+    setInterventoError('')
+    setInterventoSuccess('')
+    const token = localStorage.getItem('token')
+    try {
+      const body = {
+        tipologia: interventoForm.tipologia,
+        dataOra: new Date(interventoForm.dataOra).toISOString(),
+        principioAttivo: interventoForm.principioAttivo,
+        quantita: Number(interventoForm.quantita),
+        unitaMisura: interventoForm.unitaMisura,
+        note: interventoForm.note,
+      }
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setInterventoSuccess('Intervento registrato con successo')
+        setShowAddIntervento(false)
+        setInterventoForm({
+          tipologia: 'trattamento',
+          dataOra: new Date().toISOString().slice(0, 16),
+          principioAttivo: '',
+          quantita: '',
+          unitaMisura: 'kg/ha',
+          note: '',
+        })
+      } else {
+        setInterventoError(data.error || 'Errore durante il salvataggio')
+      }
+    } catch {
+      setInterventoError('Impossibile contattare il server')
+    } finally {
+      setSavingIntervento(false)
     }
   }
 
@@ -1095,12 +1148,126 @@ export default function FieldDetail() {
           </section>
         )}
 
-        {/* Placeholder: Storico interventi */}
-        <section className="bg-white rounded-2xl shadow-sm p-6 opacity-60">
-          <h2 className="font-poppins font-semibold text-lg mb-2 flex items-center gap-2 text-agri-green">
-            <ClipboardList className="w-5 h-5" /> Storico interventi
-          </h2>
-          <p className="text-sm text-gray-500">Disponibili dopo US42-US47 (registro interventi).</p>
+        {/* Interventi (US41+) */}
+        <section className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-poppins font-semibold text-lg flex items-center gap-2 text-agri-green">
+              <ClipboardList className="w-5 h-5" /> Interventi
+            </h2>
+            {!showAddIntervento && (
+              <button
+                onClick={() => { setShowAddIntervento(true); setInterventoSuccess('') }}
+                className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-xs font-semibold hover:opacity-90 transition inline-flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" /> Nuovo intervento
+              </button>
+            )}
+          </div>
+
+          {interventoSuccess && (
+            <p className="text-green-700 bg-green-50 text-sm p-2 rounded mb-3">{interventoSuccess}</p>
+          )}
+
+          {showAddIntervento && (
+            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipologia</label>
+                <select
+                  value={interventoForm.tipologia}
+                  onChange={(e) => setInterventoForm({ ...interventoForm, tipologia: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  disabled={savingIntervento}
+                >
+                  <option value="trattamento">Trattamento fitosanitario</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Irrigazione sarà disponibile in US42.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data e ora</label>
+                <input
+                  type="datetime-local"
+                  value={interventoForm.dataOra}
+                  onChange={(e) => setInterventoForm({ ...interventoForm, dataOra: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  disabled={savingIntervento}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Principio attivo *</label>
+                <input
+                  type="text"
+                  value={interventoForm.principioAttivo}
+                  onChange={(e) => setInterventoForm({ ...interventoForm, principioAttivo: e.target.value })}
+                  placeholder="Es. rame, zolfo, ..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  disabled={savingIntervento}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantità *</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={interventoForm.quantita}
+                    onChange={(e) => setInterventoForm({ ...interventoForm, quantita: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    disabled={savingIntervento}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unità</label>
+                  <select
+                    value={interventoForm.unitaMisura}
+                    onChange={(e) => setInterventoForm({ ...interventoForm, unitaMisura: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    disabled={savingIntervento}
+                  >
+                    <option value="kg/ha">kg/ha</option>
+                    <option value="L/ha">L/ha</option>
+                    <option value="g/ha">g/ha</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note (opzionale)</label>
+                <textarea
+                  value={interventoForm.note}
+                  onChange={(e) => setInterventoForm({ ...interventoForm, note: e.target.value })}
+                  rows="2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  disabled={savingIntervento}
+                />
+              </div>
+
+              {interventoError && <p className="text-red-600 text-sm">{interventoError}</p>}
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => { setShowAddIntervento(false); setInterventoError('') }}
+                  disabled={savingIntervento}
+                  className="px-3 py-1.5 rounded-lg border-2 border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-100"
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={handleSaveIntervento}
+                  disabled={savingIntervento}
+                  className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                >
+                  {savingIntervento ? 'Salvataggio...' : 'Registra'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showAddIntervento && !interventoSuccess && (
+            <p className="text-sm text-gray-500">La lista degli interventi sarà disponibile nelle prossime US (US44).</p>
+          )}
         </section>
 
         <ConfirmDialog
