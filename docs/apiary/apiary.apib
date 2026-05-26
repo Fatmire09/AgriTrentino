@@ -1543,3 +1543,84 @@ L'operazione è idempotente: marcare come letta una notifica già letta restitui
     + Body
 
             { "error": "Notifica non trovata" }
+
+ # Group Interventi
+
+Endpoint per la gestione del registro degli interventi agronomici (trattamenti fitosanitari e irrigazioni) effettuati sugli appezzamenti.
+
+Riferimento UML D2: classe astratta `InterventoAgronomico` con sottoclassi `TrattamentoFitosanitario` (US41) e `Irrigazione` (US42).
+
+I campi comuni sono: `appezzamentoId`, `dataOra`, `tipologia`, `note`. I campi specifici dipendono dalla tipologia:
+- **Trattamento**: `principioAttivo` (obbligatorio non vuoto), `quantita`, `unitaMisura` (es. "kg/ha")
+- **Irrigazione**: `volumeAcqua` (litri, > 0)
+
+## Lista e creazione interventi [/api/v1/fields/{fieldId}/interventi]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Crea nuovo intervento [POST]
+
+Registra un nuovo intervento agronomico sul campo. La validazione dipende dalla `tipologia`:
+trattamento richiede `principioAttivo` non vuoto, irrigazione richiede `volumeAcqua > 0`.
+
++ Request Trattamento fitosanitario (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "tipologia": "trattamento",
+                "dataOra": "2026-05-24T08:00:00.000Z",
+                "principioAttivo": "rame",
+                "quantita": 2,
+                "unitaMisura": "kg/ha",
+                "note": "Trattamento preventivo peronospora"
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "message": "Intervento registrato con successo",
+                "intervento": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d50",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "trattamento",
+                    "dataOra": "2026-05-24T08:00:00.000Z",
+                    "principioAttivo": "rame",
+                    "quantita": 2,
+                    "unitaMisura": "kg/ha",
+                    "note": "Trattamento preventivo peronospora",
+                    "createdAt": "2026-05-24T08:05:12.000Z",
+                    "updatedAt": "2026-05-24T08:05:12.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Validazione fallita: principioAttivo non può essere vuoto" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }           
