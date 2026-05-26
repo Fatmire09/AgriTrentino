@@ -1759,3 +1759,21 @@ aggiornare `dataOra`, `note` e i campi specifici (`principioAttivo`/`quantita`/`
 + Response 404 (application/json)
     + Body
             { "error": "Intervento non trovato" }
+
+### Elimina intervento [DELETE]
+Elimina definitivamente un intervento dal registro (US46).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            { "message": "Intervento eliminato con successo" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Intervento non trovato" }
