@@ -1333,6 +1333,24 @@ export default function FieldDetail() {
                         </p>
                         <p className="text-gray-400 text-xs">{new Date(iv.dataOra).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}{iv.note ? ` · ${iv.note}` : ''}</p>
                       </div>
+                      {iv.classificazione && (
+                        <span
+                          className="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold"
+                          title={iv.livello ? `Rischio del giorno: ${iv.livello}` : undefined}
+                          style={{
+                            backgroundColor:
+                              iv.classificazione === 'Giustificato' ? '#dcfce7'
+                                : iv.classificazione === 'Superfluo' ? '#fee2e2'
+                                : '#f3f4f6',
+                            color:
+                              iv.classificazione === 'Giustificato' ? '#166534'
+                                : iv.classificazione === 'Superfluo' ? '#991b1b'
+                                : '#6b7280',
+                          }}
+                        >
+                          {iv.classificazione}{iv.livello ? ` · ${iv.livello}` : ''}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
