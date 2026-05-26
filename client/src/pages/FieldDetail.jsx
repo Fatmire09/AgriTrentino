@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet, Pill, Calendar } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -79,6 +79,8 @@ export default function FieldDetail() {
   const [storicoMeteo, setStoricoMeteo] = useState([])
   const [bilancio, setBilancio] = useState(null)
   const [storicoIndici, setStoricoIndici] = useState([])
+  const [interventi, setInterventi] = useState([])
+  const [loadingInterventi, setLoadingInterventi] = useState(true)
   const [showAddIntervento, setShowAddIntervento] = useState(false)
   const [interventoForm, setInterventoForm] = useState({
     tipologia: 'trattamento',
@@ -86,6 +88,7 @@ export default function FieldDetail() {
     principioAttivo: '',
     quantita: '',
     unitaMisura: 'kg/ha',
+    volumeAcqua: '',
     note: '',
   })
   const [savingIntervento, setSavingIntervento] = useState(false)
@@ -265,6 +268,26 @@ export default function FieldDetail() {
       })
   }, [id])
 
+  // US42: carica lista interventi
+  const fetchInterventi = useCallback(async () => {
+    if (!id) return
+    setLoadingInterventi(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setInterventi(data.interventi || [])
+      }
+    } catch { /* silenzioso */ } finally {
+      setLoadingInterventi(false)
+    }
+  }, [id])
+
+  useEffect(() => { fetchInterventi() }, [fetchInterventi])
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
@@ -403,9 +426,14 @@ export default function FieldDetail() {
       const body = {
         tipologia: interventoForm.tipologia,
         dataOra: new Date(interventoForm.dataOra).toISOString(),
-        principioAttivo: interventoForm.principioAttivo,
-        quantita: Number(interventoForm.quantita),
-        unitaMisura: interventoForm.unitaMisura,
+        ...(interventoForm.tipologia === 'trattamento' && {
+          principioAttivo: interventoForm.principioAttivo,
+          quantita: Number(interventoForm.quantita),
+          unitaMisura: interventoForm.unitaMisura,
+        }),
+        ...(interventoForm.tipologia === 'irrigazione' && {
+          volumeAcqua: Number(interventoForm.volumeAcqua),
+        }),
         note: interventoForm.note,
       }
       const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi`, {
@@ -416,6 +444,7 @@ export default function FieldDetail() {
       const data = await res.json()
       if (res.ok) {
         setInterventoSuccess('Intervento registrato con successo')
+        fetchInterventi()
         setShowAddIntervento(false)
         setInterventoForm({
           tipologia: 'trattamento',
@@ -423,6 +452,7 @@ export default function FieldDetail() {
           principioAttivo: '',
           quantita: '',
           unitaMisura: 'kg/ha',
+          volumeAcqua: '',
           note: '',
         })
       } else {
@@ -1179,8 +1209,8 @@ export default function FieldDetail() {
                   disabled={savingIntervento}
                 >
                   <option value="trattamento">Trattamento fitosanitario</option>
+                  <option value="irrigazione">Irrigazione</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Irrigazione sarà disponibile in US42.</p>
               </div>
 
               <div>
@@ -1194,44 +1224,65 @@ export default function FieldDetail() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Principio attivo *</label>
-                <input
-                  type="text"
-                  value={interventoForm.principioAttivo}
-                  onChange={(e) => setInterventoForm({ ...interventoForm, principioAttivo: e.target.value })}
-                  placeholder="Es. rame, zolfo, ..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  disabled={savingIntervento}
-                />
-              </div>
+              {/* Campi specifici per TRATTAMENTO */}
+              {interventoForm.tipologia === 'trattamento' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Principio attivo *</label>
+                    <input
+                      type="text"
+                      value={interventoForm.principioAttivo}
+                      onChange={(e) => setInterventoForm({ ...interventoForm, principioAttivo: e.target.value })}
+                      placeholder="Es. rame, zolfo, ..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      disabled={savingIntervento}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantità *</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={interventoForm.quantita}
+                        onChange={(e) => setInterventoForm({ ...interventoForm, quantita: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        disabled={savingIntervento}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Unità</label>
+                      <select
+                        value={interventoForm.unitaMisura}
+                        onChange={(e) => setInterventoForm({ ...interventoForm, unitaMisura: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        disabled={savingIntervento}
+                      >
+                        <option value="kg/ha">kg/ha</option>
+                        <option value="L/ha">L/ha</option>
+                        <option value="g/ha">g/ha</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              <div className="grid grid-cols-2 gap-2">
+              {/* Campi specifici per IRRIGAZIONE */}
+              {interventoForm.tipologia === 'irrigazione' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantità *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Volume acqua (litri) *</label>
                   <input
                     type="number"
-                    step="0.1"
-                    value={interventoForm.quantita}
-                    onChange={(e) => setInterventoForm({ ...interventoForm, quantita: e.target.value })}
+                    step="1"
+                    min="1"
+                    value={interventoForm.volumeAcqua}
+                    onChange={(e) => setInterventoForm({ ...interventoForm, volumeAcqua: e.target.value })}
+                    placeholder="Es. 150"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     disabled={savingIntervento}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unità</label>
-                  <select
-                    value={interventoForm.unitaMisura}
-                    onChange={(e) => setInterventoForm({ ...interventoForm, unitaMisura: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                    disabled={savingIntervento}
-                  >
-                    <option value="kg/ha">kg/ha</option>
-                    <option value="L/ha">L/ha</option>
-                    <option value="g/ha">g/ha</option>
-                  </select>
-                </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Note (opzionale)</label>
@@ -1265,8 +1316,29 @@ export default function FieldDetail() {
             </div>
           )}
 
-          {!showAddIntervento && !interventoSuccess && (
-            <p className="text-sm text-gray-500">La lista degli interventi sarà disponibile nelle prossime US (US44).</p>
+          {!showAddIntervento && (
+            <>
+              {loadingInterventi ? (
+                <p className="text-sm text-gray-400">Caricamento interventi...</p>
+              ) : interventi.length === 0 ? (
+                <p className="text-sm text-gray-500">Nessun intervento registrato. Usa "Nuovo intervento" per aggiungerne uno.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {interventi.map((iv) => (
+                    <li key={iv._id} className="flex items-start gap-2 text-sm border border-gray-100 rounded-lg p-3 bg-white">
+                      <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${iv.tipologia === 'irrigazione' ? 'bg-blue-400' : 'bg-green-500'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-700 capitalize">
+                          {iv.tipologia === 'irrigazione' ? `Irrigazione — ${iv.volumeAcqua} L` : `Trattamento — ${iv.principioAttivo} ${iv.quantita} ${iv.unitaMisura}`}
+                        </p>
+                        <p className="text-gray-400 text-xs">{new Date(iv.dataOra).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}{iv.note ? ` · ${iv.note}` : ''}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-xs text-gray-400 mt-2">Filtri e modifica disponibili in US44–US46.</p>
+            </>
           )}
         </section>
 
