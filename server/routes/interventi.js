@@ -89,8 +89,6 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
-});
-
 // US45: PATCH /api/v1/fields/:fieldId/interventi/:interventoId — modifica intervento
 router.patch('/:interventoId', requireAuth, async (req, res) => {
   try {
@@ -130,4 +128,28 @@ router.patch('/:interventoId', requireAuth, async (req, res) => {
   }
 });
 
+// US46: DELETE /api/v1/fields/:fieldId/interventi/:interventoId — elimina intervento
+router.delete('/:interventoId', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    const intervento = await Intervento.findOneAndDelete({
+      _id: req.params.interventoId,
+      appezzamentoId: field._id,
+    });
+    if (!intervento) {
+      return res.status(404).json({ error: 'Intervento non trovato' });
+    }
+
+    return res.status(200).json({ message: 'Intervento eliminato con successo' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
+
