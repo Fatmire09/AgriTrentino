@@ -1777,3 +1777,30 @@ Elimina definitivamente un intervento dal registro (US46).
 + Response 404 (application/json)
     + Body
             { "error": "Intervento non trovato" }
+# Group Dashboard sostenibilità
+Endpoint per la dashboard di sostenibilità dell'utente, che aggrega i dati di tutti i suoi appezzamenti (US47+).
+## Sintesi sostenibilità [/api/v1/dashboard/sostenibilita]
+### Sintesi sostenibilità [GET]
+Restituisce una sintesi di sostenibilità dell'utente. In US47 indica se l'utente ha registrato interventi
+(per lo stato vuoto della dashboard). Gli indicatori dettagliati (% interventi giustificati, risparmio idrico/chimico,
+trend) arriveranno nelle US successive.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    Account con interventi registrati.
+    + Body
+            {
+                "haInterventi": true,
+                "interventiTotali": 12
+            }
++ Response 200 (application/json)
+    Account senza interventi (stato vuoto).
+    + Body
+            {
+                "haInterventi": false,
+                "interventiTotali": 0
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }            
