@@ -13,6 +13,7 @@ const fenologiaRoutes = require('./routes/fenologia');
 const indiciRoutes = require('./routes/indici');
 const notificheRoutes = require('./routes/notifiche');
 const indiciStoricoRoutes = require('./routes/indiciStorico');
+const interventiRoutes = require('./routes/interventi');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.use('/api/v1/fields/:fieldId/fenologia', fenologiaRoutes);
 app.use('/api/v1/fields/:fieldId/indici', indiciRoutes);
 app.use('/api/v1/notifiche', notificheRoutes);
 app.use('/api/v1/fields/:fieldId/indici', indiciStoricoRoutes);
+app.use('/api/v1/fields/:fieldId/interventi', interventiRoutes);
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
   .then(() => console.log('MongoDB connesso'))
