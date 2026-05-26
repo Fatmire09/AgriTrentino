@@ -1554,6 +1554,8 @@ I campi comuni sono: `appezzamentoId`, `dataOra`, `tipologia`, `note`. I campi s
 - **Trattamento**: `principioAttivo` (obbligatorio non vuoto), `quantita`, `unitaMisura` (es. "kg/ha")
 - **Irrigazione**: `volumeAcqua` (litri, > 0)
 
+US43: in lettura ogni intervento include due campi calcolati — `classificazione` (`Giustificato` / `Superfluo` / `Non valutabile`) e `livello` (il rischio del suo giorno: livello fitosanitario `basso`/`medio`/`alto` per i trattamenti, umidità del suolo per le irrigazioni). La classificazione confronta l'intervento col rischio della sua data (fitosanitario per i trattamenti, bilancio idrico per le irrigazioni).
+
 ## Lista e creazione interventi [/api/v1/fields/{fieldId}/interventi]
 
 + Parameters
@@ -1597,7 +1599,9 @@ trattamento richiede `principioAttivo` non vuoto, irrigazione richiede `volumeAc
                     "unitaMisura": "kg/ha",
                     "note": "Trattamento preventivo peronospora",
                     "createdAt": "2026-05-24T08:05:12.000Z",
-                    "updatedAt": "2026-05-24T08:05:12.000Z"
+                    "updatedAt": "2026-05-24T08:05:12.000Z",
+                    "classificazione": "Giustificato",
+                    "livello": "alto"
                 }
             }
 
@@ -1647,7 +1651,9 @@ trattamento richiede `principioAttivo` non vuoto, irrigazione richiede `volumeAc
                     "volumeAcqua": 150,
                     "note": "Irrigazione mattutina post-siccità",
                     "createdAt": "2026-05-26T07:02:00.000Z",
-                    "updatedAt": "2026-05-26T07:02:00.000Z"
+                    "updatedAt": "2026-05-26T07:02:00.000Z",
+                    "classificazione": "Superfluo",
+                    "livello": "suolo 72%"
                 }
             }
 + Response 400 (application/json)
@@ -1673,7 +1679,9 @@ sull'appezzamento, ordinati per data decrescente (più recenti prima). Max 50.
                         "dataOra": "2026-05-26T07:00:00.000Z",
                         "volumeAcqua": 150,
                         "note": "Irrigazione mattutina post-siccità",
-                        "createdAt": "2026-05-26T07:02:00.000Z"
+                        "createdAt": "2026-05-26T07:02:00.000Z",
+                        "classificazione": "Superfluo",
+                        "livello": "suolo 72%"
                     },
                     {
                         "_id": "664a1b2c3d4e5f6a7b8c9d50",
@@ -1684,7 +1692,9 @@ sull'appezzamento, ordinati per data decrescente (più recenti prima). Max 50.
                         "quantita": 2,
                         "unitaMisura": "kg/ha",
                         "note": "Trattamento preventivo peronospora",
-                        "createdAt": "2026-05-24T08:05:12.000Z"
+                        "createdAt": "2026-05-24T08:05:12.000Z",
+                        "classificazione": "Giustificato",
+                        "livello": "alto"
                     }
                 ]
             }
