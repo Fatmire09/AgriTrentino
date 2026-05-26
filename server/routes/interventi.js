@@ -56,7 +56,19 @@ router.get('/', requireAuth, async (req, res) => {
     const field = await trovaCampoAutorizzato(req, res);
     if (!field) return;
 
-    const interventi = await Intervento.find({ appezzamentoId: field._id })
+        // US44: filtri opzionali per tipologia e periodo (ultimi N giorni)
+    const filtro = { appezzamentoId: field._id };
+    if (['trattamento', 'irrigazione'].includes(req.query.tipologia)) {
+      filtro.tipologia = req.query.tipologia;
+    }
+    const giorni = parseInt(req.query.giorni, 10);
+    if (!isNaN(giorni) && giorni > 0) {
+      const dal = new Date();
+      dal.setDate(dal.getDate() - giorni);
+      filtro.dataOra = { $gte: dal };
+    }
+
+    const interventi = await Intervento.find(filtro)
       .sort({ dataOra: -1 })
       .limit(50)
       .lean();
