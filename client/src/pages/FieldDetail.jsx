@@ -80,6 +80,8 @@ export default function FieldDetail() {
   const [bilancio, setBilancio] = useState(null)
   const [storicoIndici, setStoricoIndici] = useState([])
   const [interventi, setInterventi] = useState([])
+  const [filtroTipologia, setFiltroTipologia] = useState('')
+  const [filtroGiorni, setFiltroGiorni] = useState('')
   const [loadingInterventi, setLoadingInterventi] = useState(true)
   const [showAddIntervento, setShowAddIntervento] = useState(false)
   const [interventoForm, setInterventoForm] = useState({
@@ -274,7 +276,11 @@ export default function FieldDetail() {
     setLoadingInterventi(true)
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi`, {
+      const params = new URLSearchParams()
+      if (filtroTipologia) params.set('tipologia', filtroTipologia)
+      if (filtroGiorni) params.set('giorni', filtroGiorni)
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi${qs}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
@@ -284,7 +290,7 @@ export default function FieldDetail() {
     } catch { /* silenzioso */ } finally {
       setLoadingInterventi(false)
     }
-  }, [id])
+  }, [id, filtroTipologia, filtroGiorni])
 
   useEffect(() => { fetchInterventi() }, [fetchInterventi])
 
@@ -1190,6 +1196,38 @@ export default function FieldDetail() {
                 className="px-3 py-1.5 rounded-lg bg-agri-green text-white text-xs font-semibold hover:opacity-90 transition inline-flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Nuovo intervento
+              </button>
+            )}
+          </div>
+
+          {/* US44: filtri */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <select
+              value={filtroTipologia}
+              onChange={(e) => setFiltroTipologia(e.target.value)}
+              className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Tutte le tipologie</option>
+              <option value="trattamento">Trattamenti</option>
+              <option value="irrigazione">Irrigazioni</option>
+            </select>
+            <select
+              value={filtroGiorni}
+              onChange={(e) => setFiltroGiorni(e.target.value)}
+              className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Tutto il periodo</option>
+              <option value="7">Ultimi 7 giorni</option>
+              <option value="30">Ultimi 30 giorni</option>
+              <option value="90">Ultimi 90 giorni</option>
+              <option value="365">Ultimo anno</option>
+            </select>
+            {(filtroTipologia || filtroGiorni) && (
+              <button
+                onClick={() => { setFiltroTipologia(''); setFiltroGiorni('') }}
+                className="text-xs text-gray-500 hover:text-agri-green underline"
+              >
+                Azzera filtri
               </button>
             )}
           </div>
