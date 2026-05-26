@@ -89,4 +89,45 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
+});
+
+// US45: PATCH /api/v1/fields/:fieldId/interventi/:interventoId — modifica intervento
+router.patch('/:interventoId', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    const intervento = await Intervento.findOne({
+      _id: req.params.interventoId,
+      appezzamentoId: field._id,
+    });
+    if (!intervento) {
+      return res.status(404).json({ error: 'Intervento non trovato' });
+    }
+
+    // Campi modificabili (tipologia e appezzamentoId restano fissi)
+    const modificabili = ['dataOra', 'note', 'principioAttivo', 'quantita', 'unitaMisura', 'volumeAcqua'];
+    for (const campo of modificabili) {
+      if (req.body[campo] !== undefined) intervento[campo] = req.body[campo];
+    }
+    await intervento.save(); // riesegue la validazione condizionale del modello
+
+    const { classificazione, livello } = await classificaIntervento(intervento);
+
+    return res.status(200).json({
+      message: 'Intervento aggiornato con successo',
+      intervento: { ...intervento.toObject(), classificazione, livello },
+    });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    if (err.name === 'ValidationError' || err.message) {
+      const msg = err.message?.replace('Intervento validation failed: ', '') || 'Validazione fallita';
+      return res.status(400).json({ error: `Validazione fallita: ${msg}` });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
