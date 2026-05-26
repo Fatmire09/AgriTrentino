@@ -1665,6 +1665,10 @@ trattamento richiede `principioAttivo` non vuoto, irrigazione richiede `volumeAc
 ### Lista interventi [GET]
 Restituisce gli ultimi interventi (trattamenti fitosanitari e irrigazioni) registrati
 sull'appezzamento, ordinati per data decrescente (più recenti prima). Max 50.
+US44: filtri opzionali combinabili — `tipologia` (`trattamento`|`irrigazione`) e `giorni` (ultimi N giorni).
++ Parameters
+    + tipologia: `irrigazione` (string, optional) - Filtra per tipologia: `trattamento` o `irrigazione`
+    + giorni: `30` (number, optional) - Mostra solo gli interventi degli ultimi N giorni
 + Request
     + Headers
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
