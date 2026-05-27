@@ -8,9 +8,22 @@ const { classificaIntervento } = require('../services/classificazioneInterventoS
 // GET /api/v1/dashboard/sostenibilita — sintesi sostenibilità dell'utente (tutti i suoi campi)
 router.get('/sostenibilita', requireAuth, async (req, res) => {
   try {
-    const campi = await Field.find({ ownerId: req.userId }).select('_id');
+   const campi = await Field.find({ ownerId: req.userId }).select('_id');
     const ids = campi.map((c) => c._id);
-    const interventi = await Intervento.find({ appezzamentoId: { $in: ids } });
+    const tutti = await Intervento.find({ appezzamentoId: { $in: ids } });
+
+    // US49: annate disponibili (anni con almeno un intervento), decrescenti
+    const annateDisponibili = [...new Set(tutti.map((iv) => new Date(iv.dataOra).getFullYear()))]
+      .sort((a, b) => b - a);
+
+    // Annata selezionata: ?anno se valido, altrimenti la più recente disponibile (o l'anno corrente)
+    const annoRichiesto = parseInt(req.query.anno, 10);
+    const annoSelezionato = annateDisponibili.includes(annoRichiesto)
+      ? annoRichiesto
+      : (annateDisponibili[0] || new Date().getFullYear());
+
+    // Interventi dell'annata selezionata
+    const interventi = tutti.filter((iv) => new Date(iv.dataOra).getFullYear() === annoSelezionato);
 
     // US48: classifica ogni intervento e calcola la % di giustificati
     let giustificati = 0;
@@ -28,7 +41,9 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
       : null;
 
     return res.status(200).json({
-      haInterventi: interventi.length > 0,
+      haInterventi: tutti.length > 0,
+      annoSelezionato,
+      annateDisponibili,
       interventiTotali: interventi.length,
       giustificati,
       superflui,
