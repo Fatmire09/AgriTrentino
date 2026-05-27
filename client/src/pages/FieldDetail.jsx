@@ -1454,7 +1454,7 @@ export default function FieldDetail() {
                   ))}
                 </ul>
               )}
-              <p className="text-xs text-gray-400 mt-2">Filtri e modifica disponibili in US44–US46.</p>
+              
             </>
           )}
         </section>
