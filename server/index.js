@@ -15,6 +15,7 @@ const notificheRoutes = require('./routes/notifiche');
 const indiciStoricoRoutes = require('./routes/indiciStorico');
 const interventiRoutes = require('./routes/interventi');
 const dashboardRoutes = require('./routes/dashboard');
+const consumiRoutes = require('./routes/consumi');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,6 +37,7 @@ app.use('/api/v1/notifiche', notificheRoutes);
 app.use('/api/v1/fields/:fieldId/indici', indiciStoricoRoutes);
 app.use('/api/v1/fields/:fieldId/interventi', interventiRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/fields/:fieldId/consumi', consumiRoutes);
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
   .then(() => console.log('MongoDB connesso'))
