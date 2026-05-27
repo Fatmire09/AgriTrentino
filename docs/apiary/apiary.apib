@@ -1785,7 +1785,7 @@ Restituisce una sintesi di sostenibilità dell'utente, aggregando gli interventi
 US47: `haInterventi` / `interventiTotali` (stato vuoto). US48: breakdown della classificazione
 (`giustificati`, `superflui`, `nonValutabili`) e `percentualeGiustificati` (% di giustificati sui soli interventi
 classificabili; `null` se nessuno è classificabile). US49: filtro per annata via `?anno`; la response include
-`annateDisponibili` (anni con interventi) e `annoSelezionato`. US50: `risparmioIdricoLitri` (litri risparmiati vs un regime "a calendario" = 200 L/settimana × 26 settimane per campo irrigato), con `litriIrrigati` e `baselineIdricaLitri`. Risparmio chimico e trend arriveranno nelle US successive.
+`annateDisponibili` (anni con interventi) e `annoSelezionato`. US50: `risparmioIdricoLitri` (litri risparmiati vs un regime "a calendario" = 200 L/settimana × 26 settimane per campo irrigato), con `litriIrrigati` e `baselineIdricaLitri`. US51: `risparmioChimicoKg` (kg di principio attivo risparmiati vs un regime a calendario = 8 trattamenti × 2 kg per campo trattato), con `kgTrattati` e `baselineChimicaKg`. Il trend del rischio arriverà nelle US successive.
 + Parameters
     + anno: `2025` (number, optional) - Annata (anno solare) da visualizzare; default: la più recente con interventi
 + Request
@@ -1806,7 +1806,10 @@ classificabili; `null` se nessuno è classificabile). US49: filtro per annata vi
                 "percentualeGiustificati": 70,
                 "litriIrrigati": 800,
                 "baselineIdricaLitri": 5200,
-                "risparmioIdricoLitri": 4400
+                "risparmioIdricoLitri": 4400,
+                "kgTrattati": 4,
+                "baselineChimicaKg": 16,
+                "risparmioChimicoKg": 12
             }
 + Response 200 (application/json)
     Account senza interventi (stato vuoto).
@@ -1823,7 +1826,10 @@ classificabili; `null` se nessuno è classificabile). US49: filtro per annata vi
                 "percentualeGiustificati": null,
                 "litriIrrigati": 0,
                 "baselineIdricaLitri": 0,
-                "risparmioIdricoLitri": null
+                "risparmioIdricoLitri": null,
+                "kgTrattati": 0,
+                "baselineChimicaKg": 0,
+                "risparmioChimicoKg": null
             }
 + Response 401 (application/json)
     + Body
