@@ -51,6 +51,17 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
       ? Math.max(0, baselineIdricaLitri - litriIrrigati)
       : null;
 
+    // US51: stima risparmio chimico vs gestione "a calendario"
+    // Baseline: regime a calendario = 8 trattamenti/stagione × 2 kg di dose, per ogni campo trattato
+    const KG_CALENDARIO_PER_CAMPO = 8 * 2; // 16 kg/stagione/campo
+    const trattamenti = interventi.filter((iv) => iv.tipologia === 'trattamento');
+    const kgTrattati = Math.round(trattamenti.reduce((s, iv) => s + (iv.quantita || 0), 0) * 10) / 10;
+    const campiTrattati = new Set(trattamenti.map((iv) => String(iv.appezzamentoId))).size;
+    const baselineChimicaKg = campiTrattati * KG_CALENDARIO_PER_CAMPO;
+    const risparmioChimicoKg = trattamenti.length > 0
+      ? Math.max(0, Math.round((baselineChimicaKg - kgTrattati) * 10) / 10)
+      : null;
+
     return res.status(200).json({
       haInterventi: tutti.length > 0,
       annoSelezionato,
@@ -64,6 +75,9 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
       litriIrrigati,
       baselineIdricaLitri,
       risparmioIdricoLitri,
+      kgTrattati,
+      baselineChimicaKg,
+      risparmioChimicoKg,
     });
   } catch (err) {
     return res.status(500).json({ error: 'Errore interno del server' });
