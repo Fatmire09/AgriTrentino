@@ -1834,3 +1834,26 @@ classificabili; `null` se nessuno è classificabile). US49: filtro per annata vi
 + Response 401 (application/json)
     + Body
             { "error": "Token mancante" }            
+
+## Trend rischio medio [/api/v1/dashboard/trend-rischio{?anno}]
++ Parameters
+    + anno: `2026` (number, optional) - Annata di cui calcolare il trend (default: anno corrente)
+### Trend rischio medio giornaliero [GET]
+Restituisce il **rischio medio giornaliero** (media dei punteggi `IndiceRischio`, fitosanitario + climatico,
+di tutti i campi dell'utente) per ogni giorno dell'annata — usato per il grafico del trend stagionale (US52).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "anno": 2026,
+                "trend": [
+                    { "data": "2026-01-01", "rischioMedio": 18 },
+                    { "data": "2026-01-02", "rischioMedio": 22 }
+                ]
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
+            
