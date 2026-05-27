@@ -3,6 +3,7 @@ const router = express.Router();
 const requireAuth = require('../middleware/auth');
 const Field = require('../models/Field');
 const Intervento = require('../models/Intervento');
+const IndiceRischio = require('../models/IndiceRischio');
 const { classificaIntervento } = require('../services/classificazioneInterventoService');
 
 // GET /api/v1/dashboard/sostenibilita — sintesi sostenibilità dell'utente (tutti i suoi campi)
@@ -79,6 +80,40 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
       baselineChimicaKg,
       risparmioChimicoKg,
     });
+  } catch (err) {
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+// US52: GET /api/v1/dashboard/trend-rischio?anno=YYYY — rischio medio giornaliero nella stagione
+router.get('/trend-rischio', requireAuth, async (req, res) => {
+  try {
+    const campi = await Field.find({ ownerId: req.userId }).select('_id');
+    const ids = campi.map((c) => c._id);
+
+    const anno = parseInt(req.query.anno, 10) || new Date().getFullYear();
+    const inizio = new Date(anno, 0, 1);
+    const fine = new Date(anno + 1, 0, 1);
+
+    const records = await IndiceRischio.find({
+      appezzamentoId: { $in: ids },
+      data: { $gte: inizio, $lt: fine },
+    }).select('data valore');
+
+    // Media per giorno (fito + clima di tutti i campi) → rischio medio giornaliero
+    const perGiorno = {};
+    for (const r of records) {
+      const g = new Date(r.data).toISOString().slice(0, 10);
+      if (!perGiorno[g]) perGiorno[g] = { somma: 0, n: 0 };
+      perGiorno[g].somma += r.valore;
+      perGiorno[g].n += 1;
+    }
+    const trend = Object.keys(perGiorno).sort().map((g) => ({
+      data: g,
+      rischioMedio: Math.round(perGiorno[g].somma / perGiorno[g].n),
+    }));
+
+    return res.status(200).json({ anno, trend });
   } catch (err) {
     return res.status(500).json({ error: 'Errore interno del server' });
   }
