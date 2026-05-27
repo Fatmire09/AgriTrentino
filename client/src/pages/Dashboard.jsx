@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { BarChart3, ClipboardList, Droplet, Pill } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { BarChart3, ClipboardList, Droplet, Pill, TrendingUp } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import Navbar from '../components/Navbar'
 
 export default function Dashboard() {
@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [anno, setAnno] = useState(null)
+  const [trend, setTrend] = useState([])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -32,6 +33,21 @@ export default function Dashboard() {
       .then((d) => { if (d) setData(d) })
       .finally(() => setLoading(false))
   }, [navigate, anno])
+
+
+  // US52: trend rischio medio giornaliero dell'annata selezionata
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    const annoEff = anno ?? data?.annoSelezionato
+    if (!annoEff) return
+    fetch(`http://localhost:3001/api/v1/dashboard/trend-rischio?anno=${annoEff}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => { if (d?.trend) setTrend(d.trend) })
+      .catch(() => {})
+  }, [anno, data?.annoSelezionato])
 
   return (
     <div className="min-h-screen bg-agri-beige">
@@ -161,6 +177,24 @@ export default function Dashboard() {
             ) : (
               <p className="text-sm text-gray-500">Nessun trattamento registrato in questa annata.</p>
             )}
+          </div>
+        )}
+
+        {!loading && trend.length > 1 && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
+            <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" /> Trend rischio medio
+            </h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={trend} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="data" tick={{ fontSize: 9 }} interval={29} />
+                <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+                <Tooltip />
+                <Line type="monotone" dataKey="rischioMedio" stroke="#ca8a04" strokeWidth={1.5} dot={false} name="Rischio medio" />
+              </LineChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-gray-500 mt-2">Rischio medio giornaliero (0-100) nell'annata selezionata. I picchi indicano i periodi più critici.</p>
           </div>
         )}
       </div>
