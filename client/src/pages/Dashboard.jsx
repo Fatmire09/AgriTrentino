@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { BarChart3, ClipboardList, Droplet } from 'lucide-react'
+import { BarChart3, ClipboardList, Droplet, Pill } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import Navbar from '../components/Navbar'
 
@@ -140,6 +140,26 @@ export default function Dashboard() {
               </div>
             ) : (
               <p className="text-sm text-gray-500">Nessuna irrigazione registrata in questa annata.</p>
+            )}
+          </div>
+        )}
+
+        {!loading && data && data.haInterventi && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
+            <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
+              <Pill className="w-5 h-5" /> Risparmio chimico
+            </h2>
+            {data.risparmioChimicoKg !== null ? (
+              <div>
+                <p className="text-3xl font-bold text-amber-600">{data.risparmioChimicoKg.toLocaleString('it-IT')} kg</p>
+                <p className="text-sm text-gray-500 mt-1">di principio attivo risparmiati rispetto a una gestione a calendario</p>
+                <p className="text-xs text-gray-400 mt-3">
+                  Baseline calendario: {data.baselineChimicaKg.toLocaleString('it-IT')} kg · usato: {data.kgTrattati.toLocaleString('it-IT')} kg
+                  <br />(regime a calendario: 8 trattamenti × 2 kg per campo trattato)
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Nessun trattamento registrato in questa annata.</p>
             )}
           </div>
         )}
