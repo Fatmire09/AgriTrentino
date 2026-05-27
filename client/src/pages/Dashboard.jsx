@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { BarChart3, ClipboardList } from 'lucide-react'
+import { BarChart3, ClipboardList, Droplet } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import Navbar from '../components/Navbar'
 
@@ -120,6 +120,26 @@ export default function Dashboard() {
                 Nessun intervento ancora classificabile: gli interventi su date senza indice di rischio storico risultano
                 "Non valutabile". Registra interventi con date coperte dallo storico per vedere la percentuale.
               </p>
+            )}
+          </div>
+        )}
+
+        {!loading && data && data.haInterventi && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
+            <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
+              <Droplet className="w-5 h-5" /> Risparmio idrico
+            </h2>
+            {data.risparmioIdricoLitri !== null ? (
+              <div>
+                <p className="text-3xl font-bold text-blue-600">{data.risparmioIdricoLitri.toLocaleString('it-IT')} L</p>
+                <p className="text-sm text-gray-500 mt-1">risparmiati rispetto a una gestione a calendario</p>
+                <p className="text-xs text-gray-400 mt-3">
+                  Baseline calendario: {data.baselineIdricaLitri.toLocaleString('it-IT')} L · irrigato: {data.litriIrrigati.toLocaleString('it-IT')} L
+                  <br />(regime a calendario: 200 L/settimana × 26 settimane per campo irrigato)
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Nessuna irrigazione registrata in questa annata.</p>
             )}
           </div>
         )}
