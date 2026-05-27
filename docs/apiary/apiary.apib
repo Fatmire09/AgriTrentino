@@ -1856,4 +1856,35 @@ di tutti i campi dell'utente) per ogni giorno dell'annata — usato per il grafi
 + Response 401 (application/json)
     + Body
             { "error": "Token mancante" }
+    
+# Group Consumi
+Endpoint per il monitoraggio dei consumi (acqua e principio attivo) di un appezzamento su un periodo scelto (US53). Nella UI è una sezione della Dashboard.
+## Consumi appezzamento [/api/v1/fields/{fieldId}/consumi{?giorni}]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+    + giorni: `60` (number, optional) - Periodo in giorni su cui sommare i consumi (default 60)
+### Consumi totali nel periodo [GET]
+Restituisce i totali di acqua irrigata (litri) e di principio attivo (kg) per l'appezzamento negli ultimi N giorni.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "campoId": "683abc123def456789",
+                "campoNome": "Vigneto Sud",
+                "periodoGiorni": 60,
+                "acquaTotaleLitri": 450,
+                "principioAttivoTotaleKg": 6.5,
+                "numeroInterventi": 5
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
             
