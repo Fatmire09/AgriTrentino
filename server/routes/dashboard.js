@@ -40,6 +40,17 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
       ? Math.round((giustificati / classificabili) * 100)
       : null;
 
+    // US50: stima risparmio idrico vs gestione "a calendario"
+    // Baseline: regime a calendario = 200 L/settimana × 26 settimane di stagione, per ogni campo irrigato
+    const VOLUME_CALENDARIO_PER_CAMPO = 200 * 26; // 5200 L/stagione/campo
+    const irrigazioni = interventi.filter((iv) => iv.tipologia === 'irrigazione');
+    const litriIrrigati = irrigazioni.reduce((s, iv) => s + (iv.volumeAcqua || 0), 0);
+    const campiIrrigati = new Set(irrigazioni.map((iv) => String(iv.appezzamentoId))).size;
+    const baselineIdricaLitri = campiIrrigati * VOLUME_CALENDARIO_PER_CAMPO;
+    const risparmioIdricoLitri = irrigazioni.length > 0
+      ? Math.max(0, baselineIdricaLitri - litriIrrigati)
+      : null;
+
     return res.status(200).json({
       haInterventi: tutti.length > 0,
       annoSelezionato,
@@ -50,6 +61,9 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
       nonValutabili,
       classificabili,
       percentualeGiustificati,
+      litriIrrigati,
+      baselineIdricaLitri,
+      risparmioIdricoLitri,
     });
   } catch (err) {
     return res.status(500).json({ error: 'Errore interno del server' });
