@@ -11,6 +11,12 @@ export default function Dashboard() {
   const [anno, setAnno] = useState(null)
   const [trend, setTrend] = useState([])
 
+  // US53: monitoraggio consumi (per campo + periodo)
+  const [campiConsumi, setCampiConsumi] = useState([])
+  const [consumiCampoId, setConsumiCampoId] = useState('')
+  const [consumiGiorni, setConsumiGiorni] = useState(60)
+  const [consumi, setConsumi] = useState(null)
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -48,6 +54,36 @@ export default function Dashboard() {
       .then((d) => { if (d?.trend) setTrend(d.trend) })
       .catch(() => {})
   }, [anno, data?.annoSelezionato])
+
+
+  // US53: carica i campi per il selettore consumi
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch('http://localhost:3001/api/v1/fields', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d?.fields) {
+          setCampiConsumi(d.fields)
+          if (d.fields.length > 0) setConsumiCampoId(d.fields[0]._id)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // US53: consumi del campo selezionato nel periodo
+  useEffect(() => {
+    if (!consumiCampoId) return
+    const token = localStorage.getItem('token')
+    fetch(`http://localhost:3001/api/v1/fields/${consumiCampoId}/consumi?giorni=${consumiGiorni}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => { if (d) setConsumi(d) })
+      .catch(() => {})
+  }, [consumiCampoId, consumiGiorni])
 
   return (
     <div className="min-h-screen bg-agri-beige">
@@ -195,6 +231,43 @@ export default function Dashboard() {
               </LineChart>
             </ResponsiveContainer>
             <p className="text-xs text-gray-500 mt-2">Rischio medio giornaliero (0-100) nell'annata selezionata. I picchi indicano i periodi più critici.</p>
+          </div>
+        )}
+
+        {campiConsumi.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
+            <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" /> Monitoraggio consumi
+            </h2>
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <select value={consumiCampoId} onChange={(e) => setConsumiCampoId(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                {campiConsumi.map((f) => (<option key={f._id} value={f._id}>{f.nome}</option>))}
+              </select>
+              <select value={consumiGiorni} onChange={(e) => setConsumiGiorni(Number(e.target.value))} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <option value={30}>Ultimi 30 giorni</option>
+                <option value={60}>Ultimi 60 giorni</option>
+                <option value={90}>Ultimi 90 giorni</option>
+                <option value={365}>Ultimo anno</option>
+              </select>
+            </div>
+            {consumi && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+                  <Droplet className="w-7 h-7 text-blue-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-2xl font-bold text-blue-600">{consumi.acquaTotaleLitri.toLocaleString('it-IT')} L</p>
+                    <p className="text-xs text-gray-500">acqua · {consumi.periodoGiorni} giorni</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg">
+                  <Pill className="w-7 h-7 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-2xl font-bold text-amber-600">{consumi.principioAttivoTotaleKg.toLocaleString('it-IT')} kg</p>
+                    <p className="text-xs text-gray-500">principio attivo · {consumi.periodoGiorni} giorni</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
