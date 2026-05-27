@@ -1781,9 +1781,10 @@ Elimina definitivamente un intervento dal registro (US46).
 Endpoint per la dashboard di sostenibilità dell'utente, che aggrega i dati di tutti i suoi appezzamenti (US47+).
 ## Sintesi sostenibilità [/api/v1/dashboard/sostenibilita]
 ### Sintesi sostenibilità [GET]
-Restituisce una sintesi di sostenibilità dell'utente. In US47 indica se l'utente ha registrato interventi
-(per lo stato vuoto della dashboard). Gli indicatori dettagliati (% interventi giustificati, risparmio idrico/chimico,
-trend) arriveranno nelle US successive.
+Restituisce una sintesi di sostenibilità dell'utente, aggregando gli interventi di tutti i suoi campi.
+US47: `haInterventi` / `interventiTotali` (stato vuoto). US48: breakdown della classificazione
+(`giustificati`, `superflui`, `nonValutabili`) e `percentualeGiustificati` (% di giustificati sui soli interventi
+classificabili; `null` se nessuno è classificabile). Risparmio idrico/chimico e trend arriveranno nelle US successive.
 + Request
     + Headers
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -1792,14 +1793,24 @@ trend) arriveranno nelle US successive.
     + Body
             {
                 "haInterventi": true,
-                "interventiTotali": 12
+                "interventiTotali": 12,
+                "giustificati": 7,
+                "superflui": 3,
+                "nonValutabili": 2,
+                "classificabili": 10,
+                "percentualeGiustificati": 70
             }
 + Response 200 (application/json)
     Account senza interventi (stato vuoto).
     + Body
             {
                 "haInterventi": false,
-                "interventiTotali": 0
+                "interventiTotali": 0,
+                "giustificati": 0,
+                "superflui": 0,
+                "nonValutabili": 0,
+                "classificabili": 0,
+                "percentualeGiustificati": null
             }
 + Response 401 (application/json)
     + Body
