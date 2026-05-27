@@ -8,6 +8,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [anno, setAnno] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -15,7 +16,8 @@ export default function Dashboard() {
       navigate('/login')
       return
     }
-    fetch('http://localhost:3001/api/v1/dashboard/sostenibilita', {
+    const qs = anno ? `?anno=${anno}` : ''
+    fetch(`http://localhost:3001/api/v1/dashboard/sostenibilita${qs}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -29,7 +31,7 @@ export default function Dashboard() {
       })
       .then((d) => { if (d) setData(d) })
       .finally(() => setLoading(false))
-  }, [navigate])
+  }, [navigate, anno])
 
   return (
     <div className="min-h-screen bg-agri-beige">
@@ -38,6 +40,21 @@ export default function Dashboard() {
         <h1 className="font-poppins font-bold text-3xl mb-6 flex items-center gap-2">
           <BarChart3 className="w-7 h-7 text-agri-green" /> Dashboard sostenibilità
         </h1>
+
+        {data && data.annateDisponibili && data.annateDisponibili.length > 0 && (
+          <div className="mb-4 flex items-center gap-2">
+            <label className="text-sm text-gray-600">Annata:</label>
+            <select
+              value={anno ?? data.annoSelezionato}
+              onChange={(e) => setAnno(Number(e.target.value))}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              {data.annateDisponibili.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {loading && <p className="text-gray-500">Caricamento...</p>}
 
