@@ -1784,7 +1784,10 @@ Endpoint per la dashboard di sostenibilità dell'utente, che aggrega i dati di t
 Restituisce una sintesi di sostenibilità dell'utente, aggregando gli interventi di tutti i suoi campi.
 US47: `haInterventi` / `interventiTotali` (stato vuoto). US48: breakdown della classificazione
 (`giustificati`, `superflui`, `nonValutabili`) e `percentualeGiustificati` (% di giustificati sui soli interventi
-classificabili; `null` se nessuno è classificabile). Risparmio idrico/chimico e trend arriveranno nelle US successive.
+classificabili; `null` se nessuno è classificabile). US49: filtro per annata via `?anno`; la response include
+`annateDisponibili` (anni con interventi) e `annoSelezionato`. Risparmio idrico/chimico e trend arriveranno nelle US successive.
++ Parameters
+    + anno: `2025` (number, optional) - Annata (anno solare) da visualizzare; default: la più recente con interventi
 + Request
     + Headers
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -1793,6 +1796,8 @@ classificabili; `null` se nessuno è classificabile). Risparmio idrico/chimico e
     + Body
             {
                 "haInterventi": true,
+                "annoSelezionato": 2026,
+                "annateDisponibili": [2026, 2025],
                 "interventiTotali": 12,
                 "giustificati": 7,
                 "superflui": 3,
@@ -1805,6 +1810,8 @@ classificabili; `null` se nessuno è classificabile). Risparmio idrico/chimico e
     + Body
             {
                 "haInterventi": false,
+                "annoSelezionato": 2026,
+                "annateDisponibili": [],
                 "interventiTotali": 0,
                 "giustificati": 0,
                 "superflui": 0,
