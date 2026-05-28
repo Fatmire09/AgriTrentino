@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { FlaskConical, Thermometer, Droplet, CloudRain } from 'lucide-react'
+import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Navbar from '../components/Navbar'
 import SemaforoRischio from '../components/SemaforoRischio'
 
@@ -9,6 +10,12 @@ const ETICHETTA_MINACCIA = {
   stress_termico: 'Stress termico',
   eccesso_umidita: 'Eccesso di umidità',
   nessuna: 'Nessuna minaccia',
+}
+
+function formatDelta(n) {
+  if (n == null) return 'n/d'
+  if (n === 0) return '0'
+  return (n > 0 ? '+' : '') + n
 }
 
 export default function Simulatore() {
@@ -20,7 +27,7 @@ export default function Simulatore() {
   const [stato, setStato] = useState(null)
   const [params, setParams] = useState({ tMin: '', tMax: '', urMedia: '', precipitazioni: '' })
   const [error, setError] = useState('')
-  const [indiciSimulati, setIndiciSimulati] = useState(null)
+  const [confronto, setConfronto] = useState(null)
   const [ricalcolando, setRicalcolando] = useState(false)
 
   // Carica i campi dell'utente
@@ -77,30 +84,30 @@ export default function Simulatore() {
           urMedia: data.meteoReale?.urMedia ?? '',
           precipitazioni: data.meteoReale?.precipitazioni ?? '',
         })
-        setIndiciSimulati(null)
+        setConfronto(null)
       })
       .catch(() => setError('Impossibile contattare il server.'))
       .finally(() => setLoadingStato(false))
   }, [campoId])
 
-  // US56: debounce 500ms + POST /ricalcola al cambio dei parametri
+  // US57: debounce 500ms + POST /confronto (sostituisce /ricalcola di US56)
   useEffect(() => {
     if (!campoId || !stato) return
     const { tMin, tMax, urMedia, precipitazioni } = params
     if (tMin === '' && tMax === '' && urMedia === '' && precipitazioni === '') {
-      setIndiciSimulati(null)
+      setConfronto(null)
       return
     }
     setRicalcolando(true)
     const timer = setTimeout(() => {
       const token = localStorage.getItem('token')
-      fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/ricalcola`, {
+      fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/confronto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
       })
         .then((res) => (res.ok ? res.json() : null))
-        .then((d) => { if (d) setIndiciSimulati(d) })
+        .then((d) => { if (d) setConfronto(d) })
         .catch(() => {})
         .finally(() => setRicalcolando(false))
     }, 500)
@@ -111,6 +118,9 @@ export default function Simulatore() {
     const { name, value } = e.target
     setParams((p) => ({ ...p, [name]: value }))
   }
+
+  const indiciSim = confronto?.scenarioSimulato?.indici
+  const meteoSim = confronto?.scenarioSimulato?.meteo
 
   return (
     <div className="min-h-screen bg-agri-beige">
@@ -221,7 +231,7 @@ export default function Simulatore() {
                   </div>
                 </div>
 
-                {/* US56: confronto Indici reali vs simulati */}
+                {/* Indici reali vs simulati (semafori) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white rounded-2xl shadow-sm p-6">
                     <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green">Indici reali</h2>
@@ -252,20 +262,20 @@ export default function Simulatore() {
                       Indici simulati
                       {ricalcolando && <span className="text-xs text-gray-400 font-normal">Ricalcolo...</span>}
                     </h2>
-                    {indiciSimulati ? (
+                    {indiciSim ? (
                       <div className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Fitosanitario</p>
                           <SemaforoRischio
-                            livello={indiciSimulati.fitosanitario.livello}
-                            tooltip={`Valore: ${indiciSimulati.fitosanitario.valore}/100`}
+                            livello={indiciSim.fitosanitario.livello}
+                            tooltip={`Valore: ${indiciSim.fitosanitario.valore}/100`}
                           />
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Climatico</p>
                           <SemaforoRischio
-                            livello={indiciSimulati.climatico.livello}
-                            tooltip={`Valore: ${indiciSimulati.climatico.valore}/100 · ${ETICHETTA_MINACCIA[indiciSimulati.climatico.minaccia] || indiciSimulati.climatico.minaccia}`}
+                            livello={indiciSim.climatico.livello}
+                            tooltip={`Valore: ${indiciSim.climatico.valore}/100 · ${ETICHETTA_MINACCIA[indiciSim.climatico.minaccia] || indiciSim.climatico.minaccia}`}
                           />
                         </div>
                       </div>
@@ -274,6 +284,83 @@ export default function Simulatore() {
                     )}
                   </div>
                 </div>
+
+                {/* US57: Meteo a confronto */}
+                {confronto && (
+                  <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
+                    <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green">Meteo a confronto</h2>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-gray-500">
+                            <th className="py-2">Parametro</th>
+                            <th className="py-2 text-right">Reale</th>
+                            <th className="py-2 text-right">Simulato</th>
+                            <th className="py-2 text-right">Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { label: 'T min (°C)', r: stato.meteoReale?.tMin, s: meteoSim?.tMin },
+                            { label: 'T max (°C)', r: stato.meteoReale?.tMax, s: meteoSim?.tMax },
+                            { label: 'UR media (%)', r: stato.meteoReale?.urMedia, s: meteoSim?.urMedia },
+                            { label: 'Precipitazioni (mm)', r: stato.meteoReale?.precipitazioni, s: meteoSim?.precipitazioni },
+                          ].map((row) => {
+                            const delta = row.r != null && row.s != null ? Number((row.s - row.r).toFixed(1)) : null
+                            return (
+                              <tr key={row.label} className="border-t border-gray-100">
+                                <td className="py-2">{row.label}</td>
+                                <td className="py-2 text-right">{row.r ?? 'n/d'}</td>
+                                <td className="py-2 text-right">{row.s ?? 'n/d'}</td>
+                                <td className={`py-2 text-right font-semibold ${delta == null ? 'text-gray-400' : delta > 0 ? 'text-red-600' : delta < 0 ? 'text-blue-600' : 'text-gray-500'}`}>
+                                  {formatDelta(delta)}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* US57: Grafico Indici a confronto */}
+                {confronto && (
+                  <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
+                    <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5" /> Indici a confronto
+                    </h2>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart
+                        data={[
+                          {
+                            indice: 'Fitosanitario',
+                            Reale: confronto.scenarioReale?.indici?.fitosanitario?.valore ?? 0,
+                            Simulato: confronto.scenarioSimulato?.indici?.fitosanitario?.valore ?? 0,
+                          },
+                          {
+                            indice: 'Climatico',
+                            Reale: confronto.scenarioReale?.indici?.climatico?.valore ?? 0,
+                            Simulato: confronto.scenarioSimulato?.indici?.climatico?.valore ?? 0,
+                          },
+                        ]}
+                        margin={{ top: 10, right: 10, bottom: 5, left: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="indice" tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="Reale" fill="#16a34a" />
+                        <Bar dataKey="Simulato" fill="#f97316" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Confronto del valore (0-100) degli indici di rischio nello scenario reale e in quello simulato.
+                      Δ fito {formatDelta(confronto.delta?.fitosanitario)} · Δ clima {formatDelta(confronto.delta?.climatico)}.
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </>
