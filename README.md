@@ -109,6 +109,18 @@ docker compose down -v     # ferma e cancella anche il volume del database
 | mongo    | mongo:7           | 27017 |
 | server   | ./server          | 3001  |
 | client   | ./client (nginx)  | 5173  |
+
+## Applicazione online (Render)
+
+L'applicazione è deployata su Render ed è accessibile pubblicamente:
+
+- **Frontend**: https://agritrentino-web.onrender.com
+- **Backend API**: https://agritrentino-api.onrender.com/api/v1
+- **Health check**: https://agritrentino-api.onrender.com/api/v1/health
+
+> Nota: sul piano gratuito di Render i servizi vanno in stand-by dopo inattività;
+> il primo accesso può richiedere ~50 secondi per il "risveglio".
+
 ## Team
 
 - Ada Sofia Antico: adasofia.antico@studenti.unitn.it
