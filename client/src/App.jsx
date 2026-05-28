@@ -15,6 +15,7 @@ import FieldsList from './pages/FieldsList'
 import FieldDetail from './pages/FieldDetail'
 import EditField from './pages/EditField'
 import Dashboard from './pages/Dashboard'
+import Simulatore from './pages/Simulatore'
 
 
 export default function App() {
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/fields/new" element={<AddField />} />
         <Route path="/fields/:id/edit" element={<EditField />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/simulatore" element={<Simulatore />} />
 
       </Routes>
     </BrowserRouter>
