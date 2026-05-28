@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3, Play, AlertTriangle } from 'lucide-react'
+import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3, Play, AlertTriangle, RotateCcw } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Navbar from '../components/Navbar'
 import SemaforoRischio from '../components/SemaforoRischio'
@@ -10,6 +10,17 @@ const ETICHETTA_MINACCIA = {
   stress_termico: 'Stress termico',
   eccesso_umidita: 'Eccesso di umidità',
   nessuna: 'Nessuna minaccia',
+}
+
+function tempoFa(ts) {
+  if (!ts) return null
+  const min = Math.floor((Date.now() - new Date(ts).getTime()) / 60000)
+  if (min < 1) return 'ora'
+  if (min < 60) return `${min} min fa`
+  const ore = Math.floor(min / 60)
+  if (ore < 24) return `${ore} ore fa`
+  const gg = Math.floor(ore / 24)
+  return `${gg} g fa`
 }
 
 function formatDelta(n) {
@@ -135,6 +146,33 @@ export default function Simulatore() {
       .then((d) => { if (d) setConfronto(d) })
       .catch(() => {})
       .finally(() => setRicalcolando(false))
+  }
+
+  // US59 (D2 §2.5.1 Simulazione.reset()): ripristina i parametri ai valori meteo reali,
+  // refetch /stato-iniziale per recuperare meteo eventualmente più fresco.
+  const handleReset = async () => {
+    if (!campoId) return
+    const token = localStorage.getItem('token')
+    setLoadingStato(true)
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/stato-iniziale`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setStato(data)
+      setParams({
+        tMin: data.meteoReale?.tMin ?? '',
+        tMax: data.meteoReale?.tMax ?? '',
+        urMedia: data.meteoReale?.urMedia ?? '',
+        precipitazioni: data.meteoReale?.precipitazioni ?? '',
+      })
+      setConfronto(null)
+    } catch {
+      // silenzioso
+    } finally {
+      setLoadingStato(false)
+    }
   }
 
   const indiciSim = confronto?.scenarioSimulato?.indici
@@ -268,13 +306,28 @@ export default function Simulatore() {
                         className={inputCls('precipitazioni')} />
                     </label>
                   </div>
-                  <button
-                    onClick={avviaSimulazione}
-                    disabled={ricalcolando}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
-                  >
-                    <Play className="w-4 h-4" /> {ricalcolando ? 'Calcolo in corso...' : 'Avvia simulazione'}
-                  </button>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={avviaSimulazione}
+                      disabled={ricalcolando}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                    >
+                      <Play className="w-4 h-4" /> {ricalcolando ? 'Calcolo in corso...' : 'Avvia simulazione'}
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      disabled={loadingStato || !stato}
+                      title="Annulla le modifiche e riporta i parametri al meteo reale corrente"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-agri-green text-agri-green text-sm font-semibold hover:bg-agri-green hover:text-white transition disabled:opacity-50"
+                    >
+                      <RotateCcw className="w-4 h-4" /> Ripristina valori reali
+                    </button>
+                    {stato?.timestampUltimaSync && (
+                      <span className="text-xs text-gray-500">
+                        Valori reali aggiornati {tempoFa(stato.timestampUltimaSync)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Indici reali vs simulati (semafori) */}
