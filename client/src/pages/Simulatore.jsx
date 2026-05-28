@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3 } from 'lucide-react'
+import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3, Play } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Navbar from '../components/Navbar'
 import SemaforoRischio from '../components/SemaforoRischio'
@@ -119,6 +119,24 @@ export default function Simulatore() {
     setParams((p) => ({ ...p, [name]: value }))
   }
 
+  // UC-06 passo 5 (D1): "L'utente avvia l'elaborazione". Forza il calcolo immediato
+  // bypassando il debounce dell'auto-trigger.
+  const avviaSimulazione = () => {
+    if (!campoId) return
+    const { tMin, tMax, urMedia, precipitazioni } = params
+    const token = localStorage.getItem('token')
+    setRicalcolando(true)
+    fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/confronto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => { if (d) setConfronto(d) })
+      .catch(() => {})
+      .finally(() => setRicalcolando(false))
+  }
+
   const indiciSim = confronto?.scenarioSimulato?.indici
   const meteoSim = confronto?.scenarioSimulato?.meteo
 
@@ -229,6 +247,13 @@ export default function Simulatore() {
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" />
                     </label>
                   </div>
+                  <button
+                    onClick={avviaSimulazione}
+                    disabled={ricalcolando}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    <Play className="w-4 h-4" /> {ricalcolando ? 'Calcolo in corso...' : 'Avvia simulazione'}
+                  </button>
                 </div>
 
                 {/* Indici reali vs simulati (semafori) */}
