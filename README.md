@@ -75,7 +75,40 @@ cd client
 npm install
 npm run dev          # http://localhost:5173
 ```
+## Avvio con Docker (docker-compose)
 
+In alternativa all'avvio manuale, l'intero stack (MongoDB + backend + frontend)
+si avvia con un solo comando grazie a Docker (RFN07 del D1).
+
+### Prerequisiti
+- Docker e Docker Compose installati
+
+### Avvio
+```bash
+# (opzionale) personalizza le variabili d'ambiente
+cp .env.example .env
+
+# build e avvio di tutti i servizi
+docker compose up --build
+```
+
+L'applicazione sarà disponibile su:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001/api/v1
+- MongoDB: localhost:27017
+
+### Arresto
+```bash
+docker compose down        # ferma i container
+docker compose down -v     # ferma e cancella anche il volume del database
+```
+
+### Servizi
+| Servizio | Immagine / Build  | Porta |
+|----------|-------------------|-------|
+| mongo    | mongo:7           | 27017 |
+| server   | ./server          | 3001  |
+| client   | ./client (nginx)  | 5173  |
 ## Team
 
 - Ada Sofia Antico: adasofia.antico@studenti.unitn.it
