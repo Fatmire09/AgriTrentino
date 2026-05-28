@@ -2007,3 +2007,69 @@ Il livello è derivato dal valore (`<34`=basso, `34-66`=medio, `≥67`=alto). La
 + Response 404 (application/json)
     + Body
             { "error": "Appezzamento non trovato" }
+
+
+## Confronto scenari [/api/v1/fields/{fieldId}/simulatore/confronto]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Confronto scenario reale vs simulato [POST]
+Restituisce in un'**unica risposta** i due scenari del campo (reale e simulato) con i rispettivi parametri meteo, indici di rischio e il delta (simulato − reale), per alimentare il grafico comparativo del simulatore (US57). Il frontend chiama questo endpoint con debounce di ~500 ms al cambio dei parametri e sostituisce sia il vecchio `/ricalcola` sia il fetch degli indici reali — single source of truth della pagina simulatore.
+
+- `scenarioReale.meteo`: aggregazione 24h dei `DatiMeteo` del campo (come in `/stato-iniziale`).
+- `scenarioReale.indici`: indici reali dai service di US33 (fitosanitario, su 48h DB) e US35 (climatico).
+- `scenarioSimulato.meteo`: echo dei parametri ricevuti nel body (normalizzati a numero).
+- `scenarioSimulato.indici`: indici calcolati dal `simulatoreService` (US56) sugli stessi parametri + la `fase` letta dalla `Coltura` corrente.
+- `delta.fitosanitario` e `delta.climatico`: differenza dei valori (`scenarioSimulato.valore − scenarioReale.valore`). Positivo = scenario simulato più grave del reale. `null` se uno dei due indici non è calcolabile.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "tMin": -3,
+                "tMax": 12,
+                "urMedia": 85,
+                "precipitazioni": 8
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "campoNome": "Vigneto Sud",
+                "fase": "Fioritura",
+                "scenarioReale": {
+                    "meteo": {
+                        "tMin": 12.4,
+                        "tMax": 24.8,
+                        "urMedia": 68,
+                        "precipitazioni": 0.0
+                    },
+                    "indici": {
+                        "fitosanitario": { "livello": "medio", "valore": 45 },
+                        "climatico": { "livello": "basso", "valore": 20, "minaccia": "nessuna" }
+                    }
+                },
+                "scenarioSimulato": {
+                    "meteo": {
+                        "tMin": -3,
+                        "tMax": 12,
+                        "urMedia": 85,
+                        "precipitazioni": 8
+                    },
+                    "indici": {
+                        "fitosanitario": { "livello": "medio", "valore": 60 },
+                        "climatico": { "livello": "alto", "valore": 90, "minaccia": "gelate" }
+                    }
+                },
+                "delta": {
+                    "fitosanitario": 15,
+                    "climatico": 70
+                }
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
