@@ -1856,6 +1856,31 @@ di tutti i campi dell'utente) per ogni giorno dell'annata — usato per il grafi
 + Response 401 (application/json)
     + Body
             { "error": "Token mancante" }
+
+## Report sostenibilità [/api/v1/dashboard/report{?anno}]
++ Parameters
+    + anno: `2026` (number, optional) - Annata (anno solare) di cui generare il report (default: anno corrente)
+### Genera report PDF di sostenibilità [GET]
+Restituisce un **file PDF scaricabile** con il report di sostenibilità stagionale dell'utente (US54). Il PDF contiene:
+- dati anagrafici dell'azienda (nome, nomeAzienda, email),
+- indicatori chiave dell'annata: **% interventi giustificati** (US48), **risparmio idrico stimato in litri** (US50), **risparmio chimico stimato in kg** (US51), **rischio medio annuo** (media dei punteggi `IndiceRischio` dell'anno),
+- numero totale di interventi registrati nell'annata.
+
+La response ha `Content-Type: application/pdf` e `Content-Disposition: attachment`, così il browser scarica direttamente il file (nome suggerito `report-sostenibilita-<anno>.pdf`). Il client lo invoca con header `Authorization: Bearer ...` e gestisce il blob lato JS (non è scaricabile da un link semplice).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/pdf)
+    + Headers
+            Content-Disposition: attachment; filename="report-sostenibilita-2026.pdf"
+    + Body
+            <binary PDF — contenuto non rappresentato in JSON>
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 500 (application/json)
+    + Body
+            { "error": "Errore interno del server" }
     
 # Group Consumi
 Endpoint per il monitoraggio dei consumi (acqua e principio attivo) di un appezzamento su un periodo scelto (US53). Nella UI è una sezione della Dashboard.
