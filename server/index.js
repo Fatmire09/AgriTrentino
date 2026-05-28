@@ -1,6 +1,7 @@
 require('dotenv').config({ path: '../.env' });
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const mongoose = require('mongoose');
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
@@ -22,6 +23,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(compression()); // US60 (D1 RNF01): gzip delle response per ridurre il tempo di trasferimento
 app.use(express.json());
 
 app.use('/', indexRouter);
