@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const cancellazioneService = require('../services/cancellazioneService');
 
 router.post('/register', async (req, res) => {
   const { email, password, nome, nomeAzienda } = req.body;
@@ -176,4 +177,19 @@ router.post('/change-password', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Errore interno del server' });
   }
 });
+
+// US63 (GDPR – diritto all'oblio): elimina il proprio account e tutti i dati collegati
+router.delete('/me', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+    await cancellazioneService.eliminaUtente(req.userId);
+    return res.status(200).json({ message: 'Account e dati associati eliminati con successo' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
 module.exports = router;
