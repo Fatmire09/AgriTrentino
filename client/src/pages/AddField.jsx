@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URL } from '../config'
 import { Link, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 
@@ -81,7 +82,7 @@ export default function AddField() {
       if (form.coltura) body.coltura = form.coltura
       if (form.esposizione) body.esposizione = form.esposizione
 
-      const res = await fetch('http://localhost:3001/api/v1/fields', {
+      const res = await fetch(`${API_URL}/fields`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -25,7 +26,7 @@ export default function EditField() {
       navigate('/login')
       return
     }
-    fetch(`http://localhost:3001/api/v1/fields/${id}`, {
+    fetch(`${API_URL}/fields/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -97,7 +98,7 @@ export default function EditField() {
     if (form.pendenza !== '') body.pendenza = Number(form.pendenza)
 
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}`, {
+      const res = await fetch(`${API_URL}/fields/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
