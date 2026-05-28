@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { BarChart3, ClipboardList, Droplet, Pill, TrendingUp } from 'lucide-react'
+import { BarChart3, ClipboardList, Droplet, Pill, TrendingUp, Download } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import Navbar from '../components/Navbar'
 
@@ -85,6 +85,36 @@ export default function Dashboard() {
       .catch(() => {})
   }, [consumiCampoId, consumiGiorni])
 
+  // US54: scarica il report PDF dell'annata selezionata
+  async function handleDownloadReport() {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/login')
+      return
+    }
+    const annoEff = anno ?? data?.annoSelezionato ?? new Date().getFullYear()
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/dashboard/report?anno=${annoEff}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        alert('Errore durante la generazione del report')
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `report-sostenibilita-${annoEff}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Errore di rete durante il download del report')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-agri-beige">
       <Navbar />
@@ -92,6 +122,17 @@ export default function Dashboard() {
         <h1 className="font-poppins font-bold text-3xl mb-6 flex items-center gap-2">
           <BarChart3 className="w-7 h-7 text-agri-green" /> Dashboard sostenibilità
         </h1>
+
+        {data && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={handleDownloadReport}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-agri-green text-white text-sm font-semibold hover:opacity-90 transition"
+            >
+              <Download className="w-4 h-4" /> Scarica report PDF
+            </button>
+          </div>
+        )}
 
         {data && data.annateDisponibili && data.annateDisponibili.length > 0 && (
           <div className="mb-4 flex items-center gap-2">
