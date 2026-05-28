@@ -6,6 +6,7 @@ const Coltura = require('../models/Coltura');
 const DatiMeteo = require('../models/DatiMeteo');
 const rischioFitosanitarioService = require('../services/rischioFitosanitarioService');
 const rischioClimaticoService = require('../services/rischioClimaticoService');
+const simulatoreService = require('../services/simulatoreService');
 
 // Helper: trova il campo e verifica auth + ownership
 async function trovaCampoAutorizzato(req, res) {
@@ -71,6 +72,32 @@ router.get('/stato-iniziale', requireAuth, async (req, res) => {
         climatico: climatico || null,
       },
     });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'ID non valido' });
+    }
+    return res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+// US56: POST /api/v1/fields/:fieldId/simulatore/ricalcola
+// Ricalcola gli indici di rischio a partire dai parametri meteo simulati passati nel body.
+router.post('/ricalcola', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    const { tMin, tMax, urMedia, precipitazioni } = req.body || {};
+
+    // Recupera la fase dalla coltura corrente del campo (può essere null)
+    const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
+    const fase = coltura?.fase || null;
+
+    const { fitosanitario, climatico } = await simulatoreService.calcolaIndiciSimulati({
+      tMin, tMax, urMedia, precipitazioni, fase,
+    });
+
+    return res.status(200).json({ fitosanitario, climatico });
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'ID non valido' });
