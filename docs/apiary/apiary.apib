@@ -1922,9 +1922,10 @@ Endpoint per il simulatore meteo (US55-59): permette all'agricoltore di costruir
 ### Stato iniziale del simulatore [GET]
 Restituisce lo **stato reale corrente** dell'appezzamento, usato come punto di partenza del simulatore meteo (US55):
 
-- `meteoReale`: aggregazione delle ultime 24h dei `DatiMeteo` del campo — temperatura minima/massima (°C), umidità relativa media (%), precipitazioni totali (mm). I singoli campi sono `null` se non ci sono rilevazioni nel periodo.
+- `meteoReale`: aggregazione dei `DatiMeteo` del campo con **cascade lookback** 24h → 7 giorni → 30 giorni (US57): la prima finestra non vuota vince. Restituisce temperatura minima/massima (°C), umidità relativa media (%), precipitazioni totali (mm). I singoli campi sono `null` se non ci sono rilevazioni in 30 giorni.
 - `fase`: fase fenologica corrente della coltura più recente del campo (`null` se nessuna coltura).
 - `indici`: indici di rischio reali calcolati on-demand sulle ultime 48h, riusando i service di US33 (fitosanitario) e US35 (climatico). Possono essere `null` se mancano dati meteo o coltura.
+- `timestampUltimaSync` (US59, D2 §2.5.1 `Simulazione.reset()`): ISO 8601 del `timestamp` del `DatiMeteo` più recente del campo. `null` se il campo non ha mai sincronizzato meteo. Il frontend lo usa per mostrare "Aggiornato X min fa" accanto al bottone "Ripristina valori reali".
 
 Da questi valori l'utente parte per modificare i parametri (US55); in US56 gli indici verranno ricalcolati in tempo reale con gli scenari ipotetici.
 + Request
@@ -1951,7 +1952,8 @@ Da questi valori l'utente parte per modificare i parametri (US55); in US56 gli i
                         "valore": 20,
                         "minaccia": "nessuna"
                     }
-                }
+                },
+                "timestampUltimaSync": "2026-05-28T07:32:11.000Z"
             }
 + Response 401 (application/json)
     + Body
