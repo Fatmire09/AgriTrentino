@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { FlaskConical, Thermometer, Droplet, CloudRain } from 'lucide-react'
 import Navbar from '../components/Navbar'
+import SemaforoRischio from '../components/SemaforoRischio'
+
+const ETICHETTA_MINACCIA = {
+  gelate: 'Rischio gelate',
+  stress_termico: 'Stress termico',
+  eccesso_umidita: 'Eccesso di umidità',
+  nessuna: 'Nessuna minaccia',
+}
 
 export default function Simulatore() {
   const navigate = useNavigate()
@@ -12,6 +20,8 @@ export default function Simulatore() {
   const [stato, setStato] = useState(null)
   const [params, setParams] = useState({ tMin: '', tMax: '', urMedia: '', precipitazioni: '' })
   const [error, setError] = useState('')
+  const [indiciSimulati, setIndiciSimulati] = useState(null)
+  const [ricalcolando, setRicalcolando] = useState(false)
 
   // Carica i campi dell'utente
   useEffect(() => {
@@ -67,10 +77,35 @@ export default function Simulatore() {
           urMedia: data.meteoReale?.urMedia ?? '',
           precipitazioni: data.meteoReale?.precipitazioni ?? '',
         })
+        setIndiciSimulati(null)
       })
       .catch(() => setError('Impossibile contattare il server.'))
       .finally(() => setLoadingStato(false))
   }, [campoId])
+
+  // US56: debounce 500ms + POST /ricalcola al cambio dei parametri
+  useEffect(() => {
+    if (!campoId || !stato) return
+    const { tMin, tMax, urMedia, precipitazioni } = params
+    if (tMin === '' && tMax === '' && urMedia === '' && precipitazioni === '') {
+      setIndiciSimulati(null)
+      return
+    }
+    setRicalcolando(true)
+    const timer = setTimeout(() => {
+      const token = localStorage.getItem('token')
+      fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/ricalcola`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((d) => { if (d) setIndiciSimulati(d) })
+        .catch(() => {})
+        .finally(() => setRicalcolando(false))
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [params, campoId, stato])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -152,7 +187,7 @@ export default function Simulatore() {
                 <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
                   <h2 className="font-poppins font-semibold text-lg mb-2 text-agri-green">Parametri simulati</h2>
                   <p className="text-sm text-gray-500 mb-4">
-                    Modifica i valori per costruire uno scenario ipotetico. Il ricalcolo degli indici in tempo reale sarà disponibile in US56.
+                    Modifica i valori per costruire uno scenario ipotetico. Gli indici di rischio simulati si aggiornano in tempo reale.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
@@ -183,6 +218,60 @@ export default function Simulatore() {
                       <input type="number" step="0.1" min="0" name="precipitazioni" value={params.precipitazioni} onChange={handleChange}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" />
                     </label>
+                  </div>
+                </div>
+
+                {/* US56: confronto Indici reali vs simulati */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-2xl shadow-sm p-6">
+                    <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green">Indici reali</h2>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Fitosanitario</p>
+                        {stato?.indici?.fitosanitario ? (
+                          <SemaforoRischio
+                            livello={stato.indici.fitosanitario.livello}
+                            tooltip={`Valore: ${stato.indici.fitosanitario.valore}/100`}
+                          />
+                        ) : <span className="text-sm text-gray-400">n/d</span>}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Climatico</p>
+                        {stato?.indici?.climatico ? (
+                          <SemaforoRischio
+                            livello={stato.indici.climatico.livello}
+                            tooltip={`Valore: ${stato.indici.climatico.valore}/100${stato.indici.climatico.minaccia ? ` · Minaccia: ${stato.indici.climatico.minaccia}` : ''}`}
+                          />
+                        ) : <span className="text-sm text-gray-400">n/d</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm p-6">
+                    <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
+                      Indici simulati
+                      {ricalcolando && <span className="text-xs text-gray-400 font-normal">Ricalcolo...</span>}
+                    </h2>
+                    {indiciSimulati ? (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Fitosanitario</p>
+                          <SemaforoRischio
+                            livello={indiciSimulati.fitosanitario.livello}
+                            tooltip={`Valore: ${indiciSimulati.fitosanitario.valore}/100`}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Climatico</p>
+                          <SemaforoRischio
+                            livello={indiciSimulati.climatico.livello}
+                            tooltip={`Valore: ${indiciSimulati.climatico.valore}/100 · ${ETICHETTA_MINACCIA[indiciSimulati.climatico.minaccia] || indiciSimulati.climatico.minaccia}`}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">Modifica un parametro per vedere gli indici simulati.</p>
+                    )}
                   </div>
                 </div>
               </>
