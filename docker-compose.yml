@@ -1,0 +1,45 @@
+# US61 (RFN07): orchestrazione completa di AgriTrentino.
+# Avvio dell'intero stack con un solo comando:
+#   docker compose up --build
+# Servizi: MongoDB + backend Express + frontend React (nginx).
+services:
+  mongo:
+    image: mongo:7
+    container_name: agritrentino-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  server:
+    build:
+      context: ./server
+    container_name: agritrentino-server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      # "mongo" è il nome del servizio: Docker lo risolve sulla rete interna
+      MONGODB_URI: mongodb://mongo:27017/agritrentino
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+
+  client:
+    build:
+      context: ./client
+      args:
+        # Vite inlina VITE_API_URL al build time → va passato come build arg
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api/v1}
+    container_name: agritrentino-client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "5173:80"
+
+volumes:
+  mongo-data:
