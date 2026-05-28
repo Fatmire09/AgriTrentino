@@ -1913,3 +1913,52 @@ Restituisce i totali di acqua irrigata (litri) e di principio attivo (kg) per l'
     + Body
             { "error": "Appezzamento non trovato" }
             
+# Group Simulatore meteo
+Endpoint per il simulatore meteo (US55-59): permette all'agricoltore di costruire scenari ipotetici modificando manualmente i parametri meteorologici di un appezzamento, per valutare l'impatto sugli indici di rischio. Nella UI è una pagina top-level (`/simulatore`) raggiungibile dalla Navbar, con un selettore di campo all'inizio.
+
+## Stato iniziale del simulatore [/api/v1/fields/{fieldId}/simulatore/stato-iniziale]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Stato iniziale del simulatore [GET]
+Restituisce lo **stato reale corrente** dell'appezzamento, usato come punto di partenza del simulatore meteo (US55):
+
+- `meteoReale`: aggregazione delle ultime 24h dei `DatiMeteo` del campo — temperatura minima/massima (°C), umidità relativa media (%), precipitazioni totali (mm). I singoli campi sono `null` se non ci sono rilevazioni nel periodo.
+- `fase`: fase fenologica corrente della coltura più recente del campo (`null` se nessuna coltura).
+- `indici`: indici di rischio reali calcolati on-demand sulle ultime 48h, riusando i service di US33 (fitosanitario) e US35 (climatico). Possono essere `null` se mancano dati meteo o coltura.
+
+Da questi valori l'utente parte per modificare i parametri (US55); in US56 gli indici verranno ricalcolati in tempo reale con gli scenari ipotetici.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "campoNome": "Vigneto Sud",
+                "meteoReale": {
+                    "tMin": 12.4,
+                    "tMax": 24.8,
+                    "urMedia": 68,
+                    "precipitazioni": 0.0
+                },
+                "fase": "Fioritura",
+                "indici": {
+                    "fitosanitario": {
+                        "livello": "medio",
+                        "valore": 45
+                    },
+                    "climatico": {
+                        "livello": "basso",
+                        "valore": 20,
+                        "minaccia": "nessuna"
+                    }
+                }
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
