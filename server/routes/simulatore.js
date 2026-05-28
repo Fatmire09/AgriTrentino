@@ -22,18 +22,14 @@ async function trovaCampoAutorizzato(req, res) {
   return field;
 }
 
-// US55: GET /api/v1/fields/:fieldId/simulatore/stato-iniziale
-// Restituisce i valori meteo reali correnti + fase fenologica + indici di rischio,
-// usati come punto di partenza dal simulatore meteo (US55-59).
-router.get('/stato-iniziale', requireAuth, async (req, res) => {
-  try {
-    const field = await trovaCampoAutorizzato(req, res);
-    if (!field) return;
-
-    // Meteo reale: aggregazione delle ultime 24h
-    const limite = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const aggreg = await DatiMeteo.aggregate([
-      { $match: { appezzamentoId: field._id, timestamp: { $gte: limite } } },
+// Aggrega il meteo del campo provando finestre temporali sempre più larghe
+// (24h → 7g → 30g). Risolve i campi senza sync recente.
+async function aggregaMeteoCampo(fieldId) {
+  const tentativi = [24, 24 * 7, 24 * 30]; // ore
+  for (const ore of tentativi) {
+    const limite = new Date(Date.now() - ore * 60 * 60 * 1000);
+    const r = await DatiMeteo.aggregate([
+      { $match: { appezzamentoId: fieldId, timestamp: { $gte: limite } } },
       {
         $group: {
           _id: null,
@@ -44,14 +40,27 @@ router.get('/stato-iniziale', requireAuth, async (req, res) => {
         },
       },
     ]);
-    const meteoReale = aggreg.length > 0
-      ? {
-          tMin: aggreg[0].tMin !== null ? Number(aggreg[0].tMin.toFixed(1)) : null,
-          tMax: aggreg[0].tMax !== null ? Number(aggreg[0].tMax.toFixed(1)) : null,
-          urMedia: aggreg[0].urMedia !== null ? Math.round(aggreg[0].urMedia) : null,
-          precipitazioni: Number((aggreg[0].precipitazioni ?? 0).toFixed(1)),
-        }
-      : { tMin: null, tMax: null, urMedia: null, precipitazioni: null };
+    if (r.length > 0) {
+      return {
+        tMin: r[0].tMin !== null ? Number(r[0].tMin.toFixed(1)) : null,
+        tMax: r[0].tMax !== null ? Number(r[0].tMax.toFixed(1)) : null,
+        urMedia: r[0].urMedia !== null ? Math.round(r[0].urMedia) : null,
+        precipitazioni: Number((r[0].precipitazioni ?? 0).toFixed(1)),
+      };
+    }
+  }
+  return { tMin: null, tMax: null, urMedia: null, precipitazioni: null };
+}
+
+// US55: GET /api/v1/fields/:fieldId/simulatore/stato-iniziale
+// Restituisce i valori meteo reali correnti + fase fenologica + indici di rischio,
+// usati come punto di partenza dal simulatore meteo (US55-59).
+router.get('/stato-iniziale', requireAuth, async (req, res) => {
+  try {
+    const field = await trovaCampoAutorizzato(req, res);
+    if (!field) return;
+
+    const meteoReale = await aggregaMeteoCampo(field._id);
 
     // Coltura corrente (per la fase fenologica)
     const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
@@ -120,28 +129,7 @@ router.post('/confronto', requireAuth, async (req, res) => {
     const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
     const fase = coltura?.fase || null;
 
-    // Meteo reale: aggregazione ultime 24h
-    const limite = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const aggreg = await DatiMeteo.aggregate([
-      { $match: { appezzamentoId: field._id, timestamp: { $gte: limite } } },
-      {
-        $group: {
-          _id: null,
-          tMin: { $min: '$temperaturaC' },
-          tMax: { $max: '$temperaturaC' },
-          urMedia: { $avg: '$umiditaPerc' },
-          precipitazioni: { $sum: '$precipitazioniMm' },
-        },
-      },
-    ]);
-    const meteoReale = aggreg.length > 0
-      ? {
-          tMin: aggreg[0].tMin !== null ? Number(aggreg[0].tMin.toFixed(1)) : null,
-          tMax: aggreg[0].tMax !== null ? Number(aggreg[0].tMax.toFixed(1)) : null,
-          urMedia: aggreg[0].urMedia !== null ? Math.round(aggreg[0].urMedia) : null,
-          precipitazioni: Number((aggreg[0].precipitazioni ?? 0).toFixed(1)),
-        }
-      : { tMin: null, tMax: null, urMedia: null, precipitazioni: null };
+    const meteoReale = await aggregaMeteoCampo(field._id);
 
     // Indici reali (service US33 / US35)
     const fitoReale = coltura
