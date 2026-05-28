@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3, Play } from 'lucide-react'
+import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3, Play, AlertTriangle } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Navbar from '../components/Navbar'
 import SemaforoRischio from '../components/SemaforoRischio'
@@ -140,6 +140,13 @@ export default function Simulatore() {
   const indiciSim = confronto?.scenarioSimulato?.indici
   const meteoSim = confronto?.scenarioSimulato?.meteo
 
+  // US58: campi con warning attualmente attivi (per bordo rosso input)
+  const warningsByCampo = new Set((confronto?.warnings || []).map((w) => w.campo))
+  const inputCls = (campo) =>
+    `mt-1 w-full px-3 py-2 border rounded-lg ${
+      warningsByCampo.has(campo) ? 'border-red-500 bg-red-50' : 'border-gray-300'
+    }`
+
   return (
     <div className="min-h-screen bg-agri-beige">
       <Navbar />
@@ -217,34 +224,48 @@ export default function Simulatore() {
                   <p className="text-sm text-gray-500 mb-4">
                     Modifica i valori per costruire uno scenario ipotetico. Gli indici di rischio simulati si aggiornano in tempo reale.
                   </p>
+                  {confronto?.warnings?.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg mb-4 flex items-start gap-2">
+                      <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold mb-1">Valori atipici rilevati</p>
+                        <ul className="text-sm list-disc list-inside space-y-0.5">
+                          {confronto.warnings.map((w, i) => <li key={i}>{w.messaggio}</li>)}
+                        </ul>
+                        <p className="text-xs mt-2 opacity-80">
+                          Lo scenario viene calcolato comunque — usa i risultati con cautela.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                       <span className="text-sm text-gray-700 flex items-center gap-1">
                         <Thermometer className="w-4 h-4 text-blue-500" /> Temperatura min (°C)
                       </span>
                       <input type="number" step="0.1" name="tMin" value={params.tMin} onChange={handleChange}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                        className={inputCls('tMin')} />
                     </label>
                     <label className="block">
                       <span className="text-sm text-gray-700 flex items-center gap-1">
                         <Thermometer className="w-4 h-4 text-red-500" /> Temperatura max (°C)
                       </span>
                       <input type="number" step="0.1" name="tMax" value={params.tMax} onChange={handleChange}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                        className={inputCls('tMax')} />
                     </label>
                     <label className="block">
                       <span className="text-sm text-gray-700 flex items-center gap-1">
                         <Droplet className="w-4 h-4 text-blue-500" /> Umidità relativa media (%)
                       </span>
                       <input type="number" step="1" min="0" max="100" name="urMedia" value={params.urMedia} onChange={handleChange}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                        className={inputCls('urMedia')} />
                     </label>
                     <label className="block">
                       <span className="text-sm text-gray-700 flex items-center gap-1">
                         <CloudRain className="w-4 h-4 text-blue-500" /> Precipitazioni (mm)
                       </span>
                       <input type="number" step="0.1" min="0" name="precipitazioni" value={params.precipitazioni} onChange={handleChange}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                        className={inputCls('precipitazioni')} />
                     </label>
                   </div>
                   <button
