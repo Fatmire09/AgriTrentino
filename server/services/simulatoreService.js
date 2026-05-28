@@ -7,6 +7,14 @@
 const FASI_SUSCETTIBILI = ['Fioritura', 'Allegagione', 'Sviluppo grappolo'];
 const FASI_POCO_SUSCETTIBILI = ['Maturazione', 'Riposo'];
 
+// US58 (D2 §2.5.2 ParametriSimulazione.isValid()): range fisicamente plausibili dei parametri meteo
+const RANGE_PLAUSIBILE = {
+  tMin: { min: -25, max: 30, label: 'Temperatura minima', unita: '°C' },
+  tMax: { min: -10, max: 45, label: 'Temperatura massima', unita: '°C' },
+  urMedia: { min: 0, max: 100, label: 'Umidità relativa media', unita: '%' },
+  precipitazioni: { min: 0, max: 200, label: 'Precipitazioni', unita: 'mm' },
+};
+
 function livelloDaValore(v) {
   if (v >= 67) return 'alto';
   if (v >= 34) return 'medio';
@@ -94,4 +102,41 @@ async function calcolaIndiciSimulati({ tMin, tMax, urMedia, precipitazioni, fase
   return { fitosanitario, climatico };
 }
 
-module.exports = { calcolaIndiciSimulati };
+// US58 (D2 §2.5.2 ParametriSimulazione.isValid()): verifica la plausibilità fisica dei parametri
+// e ritorna { valid, warnings:[{campo, valore, messaggio}] }. Lo scenario viene calcolato
+// comunque: i warnings servono solo a informare l'utente che lo scenario è estremo/atipico.
+function validaParametriSimulazione({ tMin, tMax, urMedia, precipitazioni }) {
+  const num = (x) => (x == null || x === '' ? null : Number(x));
+  const valori = {
+    tMin: num(tMin),
+    tMax: num(tMax),
+    urMedia: num(urMedia),
+    precipitazioni: num(precipitazioni),
+  };
+
+  const warnings = [];
+  for (const [campo, val] of Object.entries(valori)) {
+    if (val == null || Number.isNaN(val)) continue;
+    const r = RANGE_PLAUSIBILE[campo];
+    if (val < r.min || val > r.max) {
+      warnings.push({
+        campo,
+        valore: val,
+        messaggio: `${r.label} ${val} ${r.unita} fuori dal range plausibile (${r.min} … ${r.max} ${r.unita})`,
+      });
+    }
+  }
+
+  // Vincolo logico: tMin non può superare tMax
+  if (valori.tMin != null && valori.tMax != null && valori.tMin > valori.tMax) {
+    warnings.push({
+      campo: 'tMin',
+      valore: valori.tMin,
+      messaggio: `Temperatura minima (${valori.tMin} °C) maggiore della massima (${valori.tMax} °C)`,
+    });
+  }
+
+  return { valid: warnings.length === 0, warnings };
+}
+
+module.exports = { calcolaIndiciSimulati, validaParametriSimulazione };
