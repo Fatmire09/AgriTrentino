@@ -22,7 +22,8 @@ const simulatoreRoutes = require('./routes/simulatore');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+// US61: origine CORS configurabile via env (default = frontend Vite locale)
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
 app.use(compression()); // US60 (D1 RNF01): gzip delle response per ridurre il tempo di trasferimento
 app.use(express.json());
 

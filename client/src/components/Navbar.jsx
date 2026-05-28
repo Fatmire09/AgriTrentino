@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, Leaf, Bell, AlertTriangle } from 'lucide-react'
 
@@ -24,7 +25,7 @@ export default function Navbar() {
   const caricaNotifiche = () => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch('http://localhost:3001/api/v1/notifiche?limit=20', {
+    fetch(`${API_URL}/notifiche?limit=20`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -39,7 +40,7 @@ export default function Navbar() {
     const token = localStorage.getItem('token')
     if (!token) return
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/notifiche/${notificaId}`, {
+      const res = await fetch(`${API_URL}/notifiche/${notificaId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ letta: true }),
@@ -72,7 +73,7 @@ export default function Navbar() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch('http://localhost:3001/api/v1/notifiche', {
+    fetch(`${API_URL}/notifiche`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -84,7 +85,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:3001/api/v1/auth/logout', { method: 'POST' })
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST' })
     } catch {
       // anche se il server non risponde, eseguiamo comunque il logout client-side
     }

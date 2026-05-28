@@ -1,5 +1,6 @@
 
 import { useState } from 'react'
+import { API_URL } from '../config'
 import { Link, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 
@@ -56,7 +57,7 @@ export default function ChangePassword() {
       const token = localStorage.getItem('token')
       if (!token) { navigate('/login'); return }
 
-      const res = await fetch('http://localhost:3001/api/v1/auth/change-password', {
+      const res = await fetch(`${API_URL}/auth/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({

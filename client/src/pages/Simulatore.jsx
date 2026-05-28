@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { useNavigate, Link } from 'react-router-dom'
 import { FlaskConical, Thermometer, Droplet, CloudRain, BarChart3, Play, AlertTriangle, RotateCcw } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -49,7 +50,7 @@ export default function Simulatore() {
       navigate('/login')
       return
     }
-    fetch('http://localhost:3001/api/v1/fields', {
+    fetch(`${API_URL}/fields`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -79,7 +80,7 @@ export default function Simulatore() {
     const token = localStorage.getItem('token')
     setLoadingStato(true)
     setError('')
-    fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/stato-iniziale`, {
+    fetch(`${API_URL}/fields/${campoId}/simulatore/stato-iniziale`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -114,7 +115,7 @@ export default function Simulatore() {
     setRicalcolando(true)
     const timer = setTimeout(() => {
       const token = localStorage.getItem('token')
-      fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/confronto`, {
+      fetch(`${API_URL}/fields/${campoId}/simulatore/confronto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
@@ -139,7 +140,7 @@ export default function Simulatore() {
     const { tMin, tMax, urMedia, precipitazioni } = params
     const token = localStorage.getItem('token')
     setRicalcolando(true)
-    fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/confronto`, {
+    fetch(`${API_URL}/fields/${campoId}/simulatore/confronto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
@@ -157,7 +158,7 @@ export default function Simulatore() {
     const token = localStorage.getItem('token')
     setLoadingStato(true)
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${campoId}/simulatore/stato-iniziale`, {
+      const res = await fetch(`${API_URL}/fields/${campoId}/simulatore/stato-iniziale`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return

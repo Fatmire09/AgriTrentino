@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { Link, useNavigate } from 'react-router-dom'
 import { Leaf, MapPin, Maximize2, TrendingUp, Sprout } from 'lucide-react'
 
@@ -15,7 +16,7 @@ export default function FieldsList() {
       navigate('/login')
       return
     }
-    fetch('http://localhost:3001/api/v1/fields', {
+    fetch(`${API_URL}/fields`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { Link, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 
@@ -17,7 +18,7 @@ export default function EditProfile() {
       navigate('/login')
       return
     }
-    fetch('http://localhost:3001/api/v1/auth/me', {
+    fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -75,7 +76,7 @@ export default function EditProfile() {
     setSaving(true)
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:3001/api/v1/auth/me', {
+      const res = await fetch(`${API_URL}/auth/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({

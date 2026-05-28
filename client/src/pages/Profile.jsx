@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { Link, useNavigate } from 'react-router-dom'
 import { Leaf, User, Mail, Building2, Calendar } from 'lucide-react'
 
@@ -15,7 +16,7 @@ export default function Profile() {
       return
     }
 
-    fetch('http://localhost:3001/api/v1/auth/me', {
+    fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { API_URL } from '../config'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Maximize2, TrendingUp, Sprout, Compass, Cloud, AlertTriangle, ClipboardList, Pencil, Trash2, Plus, X, RefreshCw, Thermometer, Droplets, CloudRain, Clock, Droplet, Pill, Calendar } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -112,7 +113,7 @@ export default function FieldDetail() {
       navigate('/login')
       return
     }
-    fetch(`http://localhost:3001/api/v1/fields/${id}`, {
+    fetch(`${API_URL}/fields/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -146,7 +147,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/colture`, {
+    fetch(`${API_URL}/fields/${id}/colture`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.ok ? res.json() : null)
@@ -161,10 +162,10 @@ export default function FieldDetail() {
     if (!token) return
     // Carica in parallelo ultima rilevazione + sintesi giornaliera (US26)
     Promise.all([
-      fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
+      fetch(`${API_URL}/fields/${id}/meteo/latest`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((res) => res.ok ? res.json() : null),
-      fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/oggi`, {
+      fetch(`${API_URL}/fields/${id}/meteo/oggi`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((res) => res.ok ? res.json() : null),
     ])
@@ -180,7 +181,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/storico?periodoOre=48`, {
+    fetch(`${API_URL}/fields/${id}/meteo/storico?periodoOre=48`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.ok ? res.json() : null)
@@ -202,7 +203,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/bilancio-idrico?giorni=7`, {
+    fetch(`${API_URL}/fields/${id}/bilancio-idrico?giorni=7`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.ok ? res.json() : null)
@@ -215,7 +216,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/indici/storico?giorni=365`, {
+    fetch(`${API_URL}/fields/${id}/indici/storico?giorni=365`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.ok ? res.json() : null)
@@ -238,7 +239,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/fenologia`, {
+    fetch(`${API_URL}/fields/${id}/fenologia`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -251,7 +252,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/indici/fitosanitario`, {
+    fetch(`${API_URL}/fields/${id}/indici/fitosanitario`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -264,7 +265,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:3001/api/v1/fields/${id}/indici/climatico`, {
+    fetch(`${API_URL}/fields/${id}/indici/climatico`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -283,7 +284,7 @@ export default function FieldDetail() {
       if (filtroTipologia) params.set('tipologia', filtroTipologia)
       if (filtroGiorni) params.set('giorni', filtroGiorni)
       const qs = params.toString() ? `?${params.toString()}` : ''
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi${qs}`, {
+      const res = await fetch(`${API_URL}/fields/${id}/interventi${qs}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
@@ -300,7 +301,7 @@ export default function FieldDetail() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch('http://localhost:3001/api/v1/meteo/scheduler/status', {
+    fetch(`${API_URL}/meteo/scheduler/status`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.ok ? res.json() : null)
@@ -314,7 +315,7 @@ export default function FieldDetail() {
     setColturaError('')
     const token = localStorage.getItem('token')
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/colture`, {
+      const res = await fetch(`${API_URL}/fields/${id}/colture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -349,7 +350,7 @@ export default function FieldDetail() {
     const token = localStorage.getItem('token')
     const colturaId = colture[0]._id
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/colture/${colturaId}`, {
+      const res = await fetch(`${API_URL}/fields/${id}/colture/${colturaId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ fase: updatedFase }),
@@ -374,13 +375,13 @@ export default function FieldDetail() {
     setMeteoError('')
     const token = localStorage.getItem('token')
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/refresh`, {
+      const res = await fetch(`${API_URL}/fields/${id}/meteo/refresh`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
       if (res.ok) {
-        const r2 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/latest`, {
+        const r2 = await fetch(`${API_URL}/fields/${id}/meteo/latest`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const d2 = await r2.json()
@@ -388,7 +389,7 @@ export default function FieldDetail() {
         if (d2?.cacheInfo) setCacheInfo(d2.cacheInfo)
         if (d2?.statoMeteo) setStatoMeteo(d2.statoMeteo)
         // Ricarica anche la sintesi giornaliera (US26)
-        const r3 = await fetch(`http://localhost:3001/api/v1/fields/${id}/meteo/oggi`, {
+        const r3 = await fetch(`${API_URL}/fields/${id}/meteo/oggi`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const d3 = await r3.json()
@@ -407,7 +408,7 @@ export default function FieldDetail() {
     const token = localStorage.getItem('token')
     setDeleting(true)
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}`, {
+      const res = await fetch(`${API_URL}/fields/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -431,7 +432,7 @@ export default function FieldDetail() {
     setDeletingIntervento(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/fields/${id}/interventi/${interventoToDelete._id}`, {
+      const res = await fetch(`${API_URL}/fields/${id}/interventi/${interventoToDelete._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -481,8 +482,8 @@ export default function FieldDetail() {
       }
       const isEdit = !!editingInterventoId
       const url = isEdit
-        ? `http://localhost:3001/api/v1/fields/${id}/interventi/${editingInterventoId}`
-        : `http://localhost:3001/api/v1/fields/${id}/interventi`
+        ? `${API_URL}/fields/${id}/interventi/${editingInterventoId}`
+        : `${API_URL}/fields/${id}/interventi`
       const res = await fetch(url, {
         method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

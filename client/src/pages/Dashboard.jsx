@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_URL } from '../config'
 import { useNavigate, Link } from 'react-router-dom'
 import { BarChart3, ClipboardList, Droplet, Pill, TrendingUp, Download } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
@@ -24,7 +25,7 @@ export default function Dashboard() {
       return
     }
     const qs = anno ? `?anno=${anno}` : ''
-    fetch(`http://localhost:3001/api/v1/dashboard/sostenibilita${qs}`, {
+    fetch(`${API_URL}/dashboard/sostenibilita${qs}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -47,7 +48,7 @@ export default function Dashboard() {
     if (!token) return
     const annoEff = anno ?? data?.annoSelezionato
     if (!annoEff) return
-    fetch(`http://localhost:3001/api/v1/dashboard/trend-rischio?anno=${annoEff}`, {
+    fetch(`${API_URL}/dashboard/trend-rischio?anno=${annoEff}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -60,7 +61,7 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch('http://localhost:3001/api/v1/fields', {
+    fetch(`${API_URL}/fields`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -77,7 +78,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!consumiCampoId) return
     const token = localStorage.getItem('token')
-    fetch(`http://localhost:3001/api/v1/fields/${consumiCampoId}/consumi?giorni=${consumiGiorni}`, {
+    fetch(`${API_URL}/fields/${consumiCampoId}/consumi?giorni=${consumiGiorni}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -94,7 +95,7 @@ export default function Dashboard() {
     }
     const annoEff = anno ?? data?.annoSelezionato ?? new Date().getFullYear()
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/dashboard/report?anno=${annoEff}`, {
+      const res = await fetch(`${API_URL}/dashboard/report?anno=${annoEff}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
