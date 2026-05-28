@@ -62,6 +62,13 @@ router.get('/stato-iniziale', requireAuth, async (req, res) => {
 
     const meteoReale = await aggregaMeteoCampo(field._id);
 
+    // US59 (D2 §2.5.1 Simulazione.reset()): timestamp del DatiMeteo più recente,
+    // così il frontend può mostrare "Aggiornato X minuti fa" accanto al bottone Reset.
+    const ultimoDato = await DatiMeteo.findOne({ appezzamentoId: field._id })
+      .sort({ timestamp: -1 })
+      .select('timestamp');
+    const timestampUltimaSync = ultimoDato?.timestamp ?? null;
+
     // Coltura corrente (per la fase fenologica)
     const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
     const fase = coltura?.fase || null;
@@ -80,6 +87,7 @@ router.get('/stato-iniziale', requireAuth, async (req, res) => {
         fitosanitario: fitosanitario || null,
         climatico: climatico || null,
       },
+      timestampUltimaSync,
     });
   } catch (err) {
     if (err.name === 'CastError') {
