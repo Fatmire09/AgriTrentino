@@ -98,6 +98,8 @@ router.post('/ricalcola', requireAuth, async (req, res) => {
 
     const { tMin, tMax, urMedia, precipitazioni } = req.body || {};
 
+    const { warnings } = simulatoreService.validaParametriSimulazione({ tMin, tMax, urMedia, precipitazioni });
+
     // Recupera la fase dalla coltura corrente del campo (può essere null)
     const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
     const fase = coltura?.fase || null;
@@ -106,7 +108,7 @@ router.post('/ricalcola', requireAuth, async (req, res) => {
       tMin, tMax, urMedia, precipitazioni, fase,
     });
 
-    return res.status(200).json({ fitosanitario, climatico });
+    return res.status(200).json({ fitosanitario, climatico, warnings });
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'ID non valido' });
@@ -124,6 +126,8 @@ router.post('/confronto', requireAuth, async (req, res) => {
     if (!field) return;
 
     const { tMin, tMax, urMedia, precipitazioni } = req.body || {};
+
+    const { warnings } = simulatoreService.validaParametriSimulazione({ tMin, tMax, urMedia, precipitazioni });
 
     // Coltura corrente (per la fase fenologica + indici reali)
     const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
@@ -174,6 +178,7 @@ router.post('/confronto', requireAuth, async (req, res) => {
         indici: { fitosanitario: fitoSim, climatico: climaSim },
       },
       delta,
+      warnings,
     });
   } catch (err) {
     if (err.name === 'CastError') {
