@@ -1962,3 +1962,48 @@ Da questi valori l'utente parte per modificare i parametri (US55); in US56 gli i
 + Response 404 (application/json)
     + Body
             { "error": "Appezzamento non trovato" }
+
+## Ricalcolo indici simulati [/api/v1/fields/{fieldId}/simulatore/ricalcola]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Ricalcola indici da parametri meteo simulati [POST]
+Calcola gli **indici di rischio simulati** (fitosanitario + climatico) a partire dai parametri meteo passati nel body, senza salvare nulla nel DB (US56). Usato dal frontend del simulatore con debounce di ~500ms al cambio di uno qualsiasi dei parametri, per mostrare in tempo reale l'impatto degli scenari ipotetici.
+
+Logica del nuovo `services/simulatoreService.js` (versione semplificata coerente con US33/US35, su input scalari):
+
+- **Fitosanitario** (modello peronospora): base su UR e T media `(tMin+tMax)/2`. UR ≥ 80% e T in [15,25] °C → rischio alto (80). Pioggia ≥ 5 mm → +10. Modulazione per `fase` (suscettibili: Fioritura/Allegagione/Sviluppo grappolo +15; poco suscettibili: Maturazione/Riposo -10). Valore clampato a [0, 100].
+- **Climatico**: tre sotto-minacce valutate in parallelo (`gelate` da `tMin`, `stress_termico` da `tMax`, `eccesso_umidita` da `urMedia`). Restituisce la **minaccia dominante** (valore più alto) e il suo punteggio.
+
+Il livello è derivato dal valore (`<34`=basso, `34-66`=medio, `≥67`=alto). La `fase` non viene passata dal client: è letta lato backend dalla `Coltura` più recente del campo.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "tMin": -3,
+                "tMax": 12,
+                "urMedia": 85,
+                "precipitazioni": 8
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "fitosanitario": {
+                    "livello": "medio",
+                    "valore": 60
+                },
+                "climatico": {
+                    "livello": "alto",
+                    "valore": 90,
+                    "minaccia": "gelate"
+                }
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
