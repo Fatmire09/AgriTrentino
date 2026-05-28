@@ -40,6 +40,7 @@ export default function Simulatore() {
   const [error, setError] = useState('')
   const [confronto, setConfronto] = useState(null)
   const [ricalcolando, setRicalcolando] = useState(false)
+  const [mostraGrafico, setMostraGrafico] = useState(false)
 
   // Carica i campi dell'utente
   useEffect(() => {
@@ -96,6 +97,7 @@ export default function Simulatore() {
           precipitazioni: data.meteoReale?.precipitazioni ?? '',
         })
         setConfronto(null)
+        setMostraGrafico(false)
       })
       .catch(() => setError('Impossibile contattare il server.'))
       .finally(() => setLoadingStato(false))
@@ -143,7 +145,7 @@ export default function Simulatore() {
       body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
     })
       .then((res) => (res.ok ? res.json() : null))
-      .then((d) => { if (d) setConfronto(d) })
+      .then((d) => { if (d) { setConfronto(d); setMostraGrafico(true) } })
       .catch(() => {})
       .finally(() => setRicalcolando(false))
   }
@@ -424,7 +426,7 @@ export default function Simulatore() {
                 )}
 
                 {/* US57: Grafico Indici a confronto */}
-                {confronto && (
+                {confronto && mostraGrafico && (
                   <div className="bg-white rounded-2xl shadow-sm p-6 mt-4">
                     <h2 className="font-poppins font-semibold text-lg mb-4 text-agri-green flex items-center gap-2">
                       <BarChart3 className="w-5 h-5" /> Indici a confronto
