@@ -53,21 +53,26 @@ app.use('/api/v1/fields/:fieldId/interventi', interventiRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/fields/:fieldId/consumi', consumiRoutes);
 app.use('/api/v1/fields/:fieldId/simulatore', simulatoreRoutes);
-mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
-  .then(() => console.log('MongoDB connesso'))
-  .catch(err => console.error('Errore connessione MongoDB:', err));
+// US65: avvio del server solo quando index.js è eseguito direttamente.
+// Durante i test (require di app via supertest) NON connettiamo il DB reale,
+// NON apriamo la porta e NON avviamo i cron.
+if (require.main === module) {
+  mongoose
+    .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agritrentino')
+    .then(() => console.log('MongoDB connesso'))
+    .catch(err => console.error('Errore connessione MongoDB:', err));
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  // US27: avvia lo scheduler meteo periodico
-  meteoScheduler.avvia();
-  // US31: avvia lo scheduler bilancio idrico
-  meteoScheduler.avviaCronBilancio();
-  // US32: avvia lo scheduler fenologia
-  meteoScheduler.avviaCronFenologia();
-  // US37: avvia lo scheduler notifiche
-  meteoScheduler.avviaCronNotifiche();
-});
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    // US27: avvia lo scheduler meteo periodico
+    meteoScheduler.avvia();
+    // US31: avvia lo scheduler bilancio idrico
+    meteoScheduler.avviaCronBilancio();
+    // US32: avvia lo scheduler fenologia
+    meteoScheduler.avviaCronFenologia();
+    // US37: avvia lo scheduler notifiche
+    meteoScheduler.avviaCronNotifiche();
+  });
+}
 
 module.exports = app;
