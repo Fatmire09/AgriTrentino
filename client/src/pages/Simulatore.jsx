@@ -351,8 +351,8 @@ export default function Simulatore() {
                         <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="Reale" fill="#16a34a" />
-                        <Bar dataKey="Simulato" fill="#f97316" />
+                        <Bar dataKey="Reale" fill="#16a34a" animationDuration={800} />
+                        <Bar dataKey="Simulato" fill="#f97316" animationDuration={800} />
                       </BarChart>
                     </ResponsiveContainer>
                     <p className="text-xs text-gray-500 mt-2">
