@@ -1975,6 +1975,8 @@ Logica del nuovo `services/simulatoreService.js` (versione semplificata coerente
 - **Climatico**: tre sotto-minacce valutate in parallelo (`gelate` da `tMin`, `stress_termico` da `tMax`, `eccesso_umidita` da `urMedia`). Restituisce la **minaccia dominante** (valore più alto) e il suo punteggio.
 
 Il livello è derivato dal valore (`<34`=basso, `34-66`=medio, `≥67`=alto). La `fase` non viene passata dal client: è letta lato backend dalla `Coltura` più recente del campo.
+
+**US58 (D2 §2.5.2 `ParametriSimulazione.isValid()`)**: la response include sempre un campo `warnings: [{campo, valore, messaggio}]` che segnala i parametri inseriti fuori dai range fisicamente plausibili (`tMin`: -25…30 °C · `tMax`: -10…45 °C · `urMedia`: 0…100 % · `precipitazioni`: 0…200 mm) e l'eventuale violazione del vincolo logico `tMin ≤ tMax`. Array vuoto se tutti i valori sono plausibili. Lo scenario viene comunque calcolato — i warnings sono solo informativi.
 + Request (application/json)
     + Headers
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -1996,7 +1998,14 @@ Il livello è derivato dal valore (`<34`=basso, `34-66`=medio, `≥67`=alto). La
                     "livello": "alto",
                     "valore": 90,
                     "minaccia": "gelate"
-                }
+                },
+                "warnings": [
+                    {
+                        "campo": "tMin",
+                        "valore": -50,
+                        "messaggio": "Temperatura minima -50 °C fuori dal range plausibile (-25 … 30 °C)"
+                    }
+                ]
             }
 + Response 401 (application/json)
     + Body
@@ -2020,6 +2029,7 @@ Restituisce in un'**unica risposta** i due scenari del campo (reale e simulato) 
 - `scenarioSimulato.meteo`: echo dei parametri ricevuti nel body (normalizzati a numero).
 - `scenarioSimulato.indici`: indici calcolati dal `simulatoreService` (US56) sugli stessi parametri + la `fase` letta dalla `Coltura` corrente.
 - `delta.fitosanitario` e `delta.climatico`: differenza dei valori (`scenarioSimulato.valore − scenarioReale.valore`). Positivo = scenario simulato più grave del reale. `null` se uno dei due indici non è calcolabile.
+- `warnings`: array di `{campo, valore, messaggio}` con i parametri fuori dai range fisicamente plausibili (US58, D2 §2.5.2 `ParametriSimulazione.isValid()`). Array vuoto se tutto plausibile; lo scenario viene calcolato comunque.
 + Request (application/json)
     + Headers
             Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -2062,7 +2072,8 @@ Restituisce in un'**unica risposta** i due scenari del campo (reale e simulato) 
                 "delta": {
                     "fitosanitario": 15,
                     "climatico": 70
-                }
+                },
+                "warnings": []
             }
 + Response 401 (application/json)
     + Body
