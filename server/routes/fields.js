@@ -3,6 +3,7 @@ const router = express.Router();
 const Field = require('../models/Field');
 const requireAuth = require('../middleware/auth');
 const meteoService = require('../services/meteoService');
+const cancellazioneService = require('../services/cancellazioneService');
 
 router.get('/', requireAuth, async (req, res) => {
   try {
@@ -142,6 +143,8 @@ router.delete('/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Non autorizzato' });
     }
 
+    // US63 (GDPR): elimina a cascata tutti i dati associati al campo
+    await cancellazioneService.eliminaDatiCampo(field._id);
     await Field.deleteOne({ _id: field._id });
 
     return res.status(200).json({ message: 'Appezzamento eliminato con successo' });
