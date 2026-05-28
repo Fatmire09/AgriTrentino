@@ -27,6 +27,16 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
 app.use(compression()); // US60 (D1 RNF01): gzip delle response per ridurre il tempo di trasferimento
 app.use(express.json());
 
+// US64: health check per il monitoraggio su Render (stato app + connessione DB)
+app.get('/api/v1/health', (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? 'ok' : 'degraded',
+    database: dbConnected ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use('/', indexRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/fields', fieldsRouter);
