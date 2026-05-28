@@ -66,11 +66,12 @@ router.get('/stato-iniziale', requireAuth, async (req, res) => {
     // così il frontend può mostrare "Aggiornato X minuti fa" accanto al bottone Reset.
     const ultimoDato = await DatiMeteo.findOne({ appezzamentoId: field._id })
       .sort({ timestamp: -1 })
-      .select('timestamp');
+      .select('timestamp')
+      .lean();
     const timestampUltimaSync = ultimoDato?.timestamp ?? null;
 
     // Coltura corrente (per la fase fenologica)
-    const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
+    const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 }).lean();
     const fase = coltura?.fase || null;
 
     // Indici reali correnti (riusano i service esistenti — calcolo on-demand sulle ultime 48h)
@@ -138,7 +139,7 @@ router.post('/confronto', requireAuth, async (req, res) => {
     const { warnings } = simulatoreService.validaParametriSimulazione({ tMin, tMax, urMedia, precipitazioni });
 
     // Coltura corrente (per la fase fenologica + indici reali)
-    const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
+    const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 }).lean();
     const fase = coltura?.fase || null;
 
     const meteoReale = await aggregaMeteoCampo(field._id);

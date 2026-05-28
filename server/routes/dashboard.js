@@ -11,9 +11,9 @@ const PDFDocument = require('pdfkit');
 // GET /api/v1/dashboard/sostenibilita — sintesi sostenibilità dell'utente (tutti i suoi campi)
 router.get('/sostenibilita', requireAuth, async (req, res) => {
   try {
-   const campi = await Field.find({ ownerId: req.userId }).select('_id');
+   const campi = await Field.find({ ownerId: req.userId }).select('_id').lean();
     const ids = campi.map((c) => c._id);
-    const tutti = await Intervento.find({ appezzamentoId: { $in: ids } });
+    const tutti = await Intervento.find({ appezzamentoId: { $in: ids } }).lean();
 
     // US49: annate disponibili (anni con almeno un intervento), decrescenti
     const annateDisponibili = [...new Set(tutti.map((iv) => new Date(iv.dataOra).getFullYear()))]
@@ -90,7 +90,7 @@ router.get('/sostenibilita', requireAuth, async (req, res) => {
 // US52: GET /api/v1/dashboard/trend-rischio?anno=YYYY — rischio medio giornaliero nella stagione
 router.get('/trend-rischio', requireAuth, async (req, res) => {
   try {
-    const campi = await Field.find({ ownerId: req.userId }).select('_id');
+    const campi = await Field.find({ ownerId: req.userId }).select('_id').lean();
     const ids = campi.map((c) => c._id);
 
     const anno = parseInt(req.query.anno, 10) || new Date().getFullYear();
@@ -100,7 +100,7 @@ router.get('/trend-rischio', requireAuth, async (req, res) => {
     const records = await IndiceRischio.find({
       appezzamentoId: { $in: ids },
       data: { $gte: inizio, $lt: fine },
-    }).select('data valore');
+    }).select('data valore').lean();
 
     // Media per giorno (fito + clima di tutti i campi) → rischio medio giornaliero
     const perGiorno = {};
@@ -125,7 +125,7 @@ router.get('/trend-rischio', requireAuth, async (req, res) => {
 router.get('/report', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    const campi = await Field.find({ ownerId: req.userId }).select('_id');
+    const campi = await Field.find({ ownerId: req.userId }).select('_id').lean();
     const ids = campi.map((c) => c._id);
 
     const anno = parseInt(req.query.anno, 10) || new Date().getFullYear();
@@ -135,7 +135,7 @@ router.get('/report', requireAuth, async (req, res) => {
     const interventi = await Intervento.find({
       appezzamentoId: { $in: ids },
       dataOra: { $gte: inizioAnno, $lt: fineAnno },
-    });
+    }).lean();
 
     let giustificati = 0, superflui = 0, nonValutabili = 0;
     for (const iv of interventi) {
@@ -157,7 +157,7 @@ router.get('/report', requireAuth, async (req, res) => {
     const campiTrattati = new Set(trattamenti.map((iv) => String(iv.appezzamentoId))).size;
     const risparmioChimicoKg = trattamenti.length > 0 ? Math.max(0, Math.round((campiTrattati * 16 - kgTrattati) * 10) / 10) : 0;
 
-    const recordsIndici = await IndiceRischio.find({ appezzamentoId: { $in: ids }, data: { $gte: inizioAnno, $lt: fineAnno } }).select('valore');
+    const recordsIndici = await IndiceRischio.find({ appezzamentoId: { $in: ids }, data: { $gte: inizioAnno, $lt: fineAnno } }).select('valore').lean();
     const rischioMedioAnnuo = recordsIndici.length > 0
       ? Math.round(recordsIndici.reduce((s, r) => s + r.valore, 0) / recordsIndici.length)
       : null;
