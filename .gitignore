@@ -29,3 +29,6 @@ Thumbs.db
 *.swp
 node_modules/
 package-lock.json
+
+# Test coverage output (US65)
+server/coverage/
