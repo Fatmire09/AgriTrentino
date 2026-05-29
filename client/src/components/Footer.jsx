@@ -8,17 +8,6 @@ import {
   Linkedin,
 } from 'lucide-react'
 
-const footerLinks = {
-  Piattaforma: ['Chi siamo', 'Come funziona', 'API e integrazioni'],
-  Risorse: ['Documentazione', 'Blog agricolo', 'Guide pratiche', 'Webinar'],
-  Supporto: [
-    'Centro assistenza',
-    'Contattaci',
-    'Privacy Policy',
-    'Termini di servizio',
-  ],
-}
-
 const contactInfo = [
   { icon: <Mail className="w-4 h-4" />, text: 'info@agritrentino.it' },
   { icon: <Phone className="w-4 h-4" />, text: '+39 0461 123 456' },
@@ -35,9 +24,9 @@ export default function Footer() {
   return (
     <footer className="pt-16 pb-8 bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+        <div className="mb-12">
           {/* Brand column */}
-          <div className="lg:col-span-2">
+          <div className="max-w-md">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-agri-green">
                 <Leaf className="w-5 h-5 text-white" />
@@ -74,27 +63,6 @@ export default function Footer() {
               ))}
             </div>
           </div>
-
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h4 className="font-poppins font-semibold text-sm text-white mb-4 uppercase tracking-[0.05em]">
-                {category}
-              </h4>
-              <ul className="flex flex-col gap-2.5">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-gray-400 hover:text-green-400 transition"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
 
         {/* Bottom bar */}
