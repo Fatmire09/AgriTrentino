@@ -43,12 +43,10 @@ export default function Footer() {
           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
         >
           <p className="text-[13px] text-gray-500">
-            © 2025 AgriTrentino. Tutti i diritti riservati.
+            © 2026 AgriTrentino. Tutti i diritti riservati.
           </p>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[13px] text-gray-500">Fatto con</span>
+          <div className="flex items-center">
             <Leaf className="w-3.5 h-3.5" style={{ color: '#4CAF50' }} />
-            <span className="text-[13px] text-gray-500">in Trentino</span>
           </div>
         </div>
       </div>
