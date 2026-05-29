@@ -11,13 +11,13 @@ const problemi = [
     icon: <BarChart2 className="w-6 h-6" />,
     title: 'Interpretazione dei dati',
     description:
-      "Gli agricoltori oggi hanno accesso a sensori, bollettini fitosanitari, API meteorologiche — una mole crescente di informazioni. Ma mancano completamente di strumenti capaci di trasformare questi dati grezzi in indicazioni operative concrete.",
+      "Gli agricoltori oggi hanno accesso a sensori, bollettini fitosanitari, API meteorologiche, una mole crescente di informazioni. Ma mancano completamente di strumenti capaci di trasformare questi dati grezzi in indicazioni operative concrete.",
   },
   {
     icon: <Droplets className="w-6 h-6" />,
     title: 'Gestione inefficiente delle risorse',
     description:
-      "Questa incertezza porta gli agricoltori a intervenire per eccesso di cautela — irrigazioni e trattamenti fitosanitari effettuati a calendario fisso, indipendentemente dal rischio reale del momento. Le conseguenze sono dirette: aumento dei costi operativi, spreco di acqua e prodotti chimici, e un impatto ambientale del tutto evitabile.",
+      "Questa incertezza porta gli agricoltori a intervenire per eccesso di cautela, con irrigazioni e trattamenti fitosanitari effettuati a calendario fisso, indipendentemente dal rischio reale del momento. Le conseguenze sono dirette: aumento dei costi operativi, spreco di acqua e prodotti chimici, e un impatto ambientale del tutto evitabile.",
   },
 ]
 
