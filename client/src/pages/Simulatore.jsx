@@ -104,37 +104,18 @@ export default function Simulatore() {
       .finally(() => setLoadingStato(false))
   }, [campoId])
 
-  // US57: debounce 500ms + POST /confronto (sostituisce /ricalcola di US56)
-  useEffect(() => {
-    if (!campoId || !stato) return
-    const { tMin, tMax, urMedia, precipitazioni } = params
-    if (tMin === '' && tMax === '' && urMedia === '' && precipitazioni === '') {
-      setConfronto(null)
-      return
-    }
-    setRicalcolando(true)
-    const timer = setTimeout(() => {
-      const token = localStorage.getItem('token')
-      fetch(`${API_URL}/fields/${campoId}/simulatore/confronto`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tMin, tMax, urMedia, precipitazioni }),
-      })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((d) => { if (d) setConfronto(d) })
-        .catch(() => {})
-        .finally(() => setRicalcolando(false))
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [params, campoId, stato])
+  // Aggiornamento manuale: il confronto si ricalcola solo al click di
+  // "Avvia simulazione" (vedi avviaSimulazione più sotto). Il debounce
+  // automatico è stato rimosso su richiesta utente — l'agricoltore vuole
+  // controllo esplicito su quando lo scenario viene calcolato.
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setParams((p) => ({ ...p, [name]: value }))
   }
 
-  // UC-06 passo 5 (D1): "L'utente avvia l'elaborazione". Forza il calcolo immediato
-  // bypassando il debounce dell'auto-trigger.
+  // UC-06 passo 5 (D1): "L'utente avvia l'elaborazione".
+  // Unico trigger del ricalcolo: il click sul bottone "Avvia simulazione".
   const avviaSimulazione = () => {
     if (!campoId) return
     const { tMin, tMax, urMedia, precipitazioni } = params
@@ -263,7 +244,7 @@ export default function Simulatore() {
                 <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
                   <h2 className="font-poppins font-semibold text-lg mb-2 text-agri-green">Parametri simulati</h2>
                   <p className="text-sm text-gray-500 mb-4">
-                    Modifica i valori per costruire uno scenario ipotetico. Gli indici di rischio simulati si aggiornano in tempo reale.
+                    Modifica i valori per costruire uno scenario ipotetico, poi premi <span className="font-semibold">Avvia simulazione</span> per calcolare gli indici di rischio simulati e il confronto con lo scenario reale.
                   </p>
                   {confronto?.warnings?.length > 0 && (
                     <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg mb-4 flex items-start gap-2">
@@ -382,7 +363,7 @@ export default function Simulatore() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-400">Modifica un parametro per vedere gli indici simulati.</p>
+                      <p className="text-sm text-gray-400">Premi <span className="font-semibold">Avvia simulazione</span> per calcolare gli indici simulati.</p>
                     )}
                   </div>
                 </div>
