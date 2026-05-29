@@ -121,6 +121,13 @@ L'applicazione è deployata su Render ed è accessibile pubblicamente:
 > Nota: sul piano gratuito di Render i servizi vanno in stand-by dopo inattività;
 > il primo accesso può richiedere ~50 secondi per il "risveglio".
 
+## Crediti immagini
+
+Le immagini della landing page provengono da fonti libere:
+- Foto Unsplash (licenza Unsplash, libera per uso commerciale)
+- "Val di Cembra - Cembra e Faver visti da Sevignano" — Syrio, CC BY-SA 3.0, via Wikimedia Commons
+- "Vigneti con vista su Paganella e Brenta" — CC BY-SA 4.0, via Wikimedia Commons
+
 ## Team
 
 - Ada Sofia Antico: adasofia.antico@studenti.unitn.it

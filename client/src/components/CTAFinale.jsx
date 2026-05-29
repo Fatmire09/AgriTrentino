@@ -1,4 +1,4 @@
-import { ArrowRight, Leaf } from 'lucide-react'
+import { ArrowRight, Leaf, Lock, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function CTAFinale() {
@@ -47,15 +47,12 @@ export default function CTAFinale() {
             Fai parte della comunità agricola trentina più innovativa.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-10">
-            <button 
+          <div className="flex justify-center items-center relative z-10">
+            <button
               onClick={() => navigate('/register')}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-white text-agri-green font-bold text-base hover:opacity-90 transition shadow-xl">
               Registrati Gratuitamente
               <ArrowRight className="w-5 h-5" />
-            </button>
-            <button className="inline-flex items-center gap-2 px-8 py-4 rounded-lg border-2 border-white text-white font-semibold text-base hover:bg-white hover:text-agri-green transition">
-              Contattaci
             </button>
           </div>
 
@@ -65,13 +62,13 @@ export default function CTAFinale() {
             style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}
           >
             <div className="flex items-center gap-2">
-              <span className="text-base">🔒</span>
+              <Lock className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.8)' }} />
               <span className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
                 Dati protetti GDPR
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-base">🌍</span>
+              <Globe className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.8)' }} />
               <span className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
                 100% Made in Trentino
               </span>
