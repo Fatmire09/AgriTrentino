@@ -1,7 +1,9 @@
 const IndiceRischio = require('../models/IndiceRischio');
 const BilancioIdricoGiornaliero = require('../models/BilancioIdricoGiornaliero');
 const Coltura = require('../models/Coltura');
+const Field = require('../models/Field');
 const rischioFitosanitarioService = require('./rischioFitosanitarioService');
+const bilancioIdricoService = require('./bilancioIdricoService');
 
 // ────────────────────────────────────────────────────────────────────────────────
 // CLASSIFICAZIONE INTERVENTO — US43 (+ fallback on-demand US48)
@@ -55,10 +57,18 @@ async function classificaIntervento(intervento) {
         appezzamentoId: intervento.appezzamentoId,
       }).sort({ data: -1 });
     }
-    if (!bilancio) return { classificazione: 'Non valutabile', livello: null };
+    let umiditaSuoloPerc = bilancio ? bilancio.umiditaSuoloPerc : null;
+    // 3. fallback on-demand: nessuno snapshot di bilancio per il campo → calcolo corrente
+    //    (speculare al fallback fitosanitario on-demand dei trattamenti)
+    if (umiditaSuoloPerc === null) {
+      const field = await Field.findById(intervento.appezzamentoId);
+      const corrente = field ? await bilancioIdricoService.calcolaBilancioOnDemand(field) : null;
+      umiditaSuoloPerc = corrente ? corrente.umiditaSuoloPerc : null;
+    }
+    if (umiditaSuoloPerc === null) return { classificazione: 'Non valutabile', livello: null };
     return {
-      classificazione: bilancio.umiditaSuoloPerc >= 60 ? 'Superfluo' : 'Giustificato',
-      livello: `suolo ${bilancio.umiditaSuoloPerc}%`,
+      classificazione: umiditaSuoloPerc >= 60 ? 'Superfluo' : 'Giustificato',
+      livello: `suolo ${umiditaSuoloPerc}%`,
     };
   }
 
