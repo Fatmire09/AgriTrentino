@@ -422,8 +422,6 @@ automaticamente `ownerId` dal token JWT.
                 }
             }
 
-+ Response 400 (application/json)
-
     Campi obbligatori mancanti o validazione fallita (latitudine fuori [-90, 90],
     longitudine fuori [-180, 180], superficie ≤ 0, pendenza fuori [0, 100]).
 
@@ -442,3 +440,1649 @@ automaticamente `ownerId` dal token JWT.
     + Body
 
             { "error": "Errore interno del server" }
+
+## Dettaglio appezzamento [/api/v1/fields/{id}]
+
++ Parameters
+    + id: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Recupera dettagli appezzamento [GET]
+
+Restituisce i dettagli completi di un singolo appezzamento. Richiede autenticazione tramite JWT.
+L'utente può accedere solo ai propri appezzamenti (controllo `ownerId === req.userId`).
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "field": {
+                    "_id": "683abc123def456789",
+                    "nome": "Campo Nord",
+                    "latitudine": 46.07,
+                    "longitudine": 11.12,
+                    "superficie": 2.5,
+                    "pendenza": 5,
+                    "coltura": "Vite",
+                    "esposizione": "Sud",
+                    "ownerId": "683user000111222",
+                    "createdAt": "2026-05-13T10:00:00.000Z",
+                    "updatedAt": "2026-05-13T10:00:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "ID non valido" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+### Aggiorna appezzamento [PATCH]
+Aggiorna parzialmente un appezzamento. Richiede autenticazione JWT.
+L'utente può modificare solo i propri appezzamenti (controllo `ownerId === req.userId`).
+Tutti i campi nel body sono opzionali; vengono aggiornati solo quelli presenti.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "nome": "Vigneto Pergine - aggiornato",
+                "pendenza": 25,
+                "coltura": "Vite",
+                "esposizione": "Sud-Ovest"
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "message": "Appezzamento aggiornato con successo",
+                "field": {
+                    "_id": "683abc123def456789",
+                    "nome": "Vigneto Pergine - aggiornato",
+                    "latitudine": 46.07,
+                    "longitudine": 11.12,
+                    "superficie": 2.5,
+                    "pendenza": 25,
+                    "coltura": "Vite",
+                    "esposizione": "Sud-Ovest",
+                    "ownerId": "683user000111222",
+                    "createdAt": "2026-05-13T10:00:00.000Z",
+                    "updatedAt": "2026-05-21T09:15:00.000Z"
+                }
+            }
++ Response 400 (application/json)
+    + Body
+            { "error": "Validazione fallita: la pendenza deve essere tra 0 e 100" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+### Elimina appezzamento [DELETE]
+Elimina definitivamente un appezzamento e tutti i dati associati (storico colture, indici, interventi futuri).
+L'operazione è irreversibile. Richiede autenticazione JWT.
+L'utente può eliminare solo i propri appezzamenti (controllo `ownerId === req.userId`).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "message": "Appezzamento eliminato con successo"
+            }
++ Response 400 (application/json)
+    + Body
+            { "error": "ID non valido" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+# Group Colture
+
+Endpoint per la gestione delle colture associate a un appezzamento.
+Ogni appezzamento può avere più colture nel tempo (storico); l'attuale è la più recente.
+Tutti gli endpoint richiedono autenticazione e accesso solo al proprio appezzamento.
+
+## Colture appezzamento [/api/v1/fields/{fieldId}/colture]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Lista colture dell'appezzamento [GET]
+
+Restituisce l'elenco di tutte le colture associate all'appezzamento, ordinate dalla più recente.
+La prima della lista è la coltura corrente.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "colture": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d10",
+                        "appezzamentoId": "683abc123def456789",
+                        "tipologia": "Vite",
+                        "varieta": null,
+                        "fase": null,
+                        "dataAggiornamento": "2026-05-21T09:00:00.000Z",
+                        "createdAt": "2026-05-21T09:00:00.000Z",
+                        "updatedAt": "2026-05-21T09:00:00.000Z"
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+### Aggiungi coltura all'appezzamento [POST]
+
+
+Crea una nuova coltura per l'appezzamento. Diventa la nuova coltura corrente (la più recente).
+Le precedenti restano in storico.
+Il campo `varieta` è opzionale ma se presente deve essere coerente con la `tipologia`:
+- **Vite**: Chardonnay, Pinot Nero, Müller-Thurgau, Teroldego, Marzemino
+Altre tipologie e varietà saranno introdotte negli sprint futuri (Melo, Piccoli Frutti).
+
+Il campo `fase` (fase fenologica) è opzionale ma se presente deve essere una delle fasi previste per la tipologia:
+- **Vite**: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+            {
+                "tipologia": "Vite",
+                "varieta": "Chardonnay",
+                "fase": "fioritura"
+            }
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "message": "Coltura aggiunta con successo",
+                "coltura": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d10",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "Vite",
+                    "varieta": "Chardonnay",
+                    "fase": "fioritura",
+                    "dataAggiornamento": "2026-05-21T09:00:00.000Z",
+                    "createdAt": "2026-05-21T09:00:00.000Z",
+                    "updatedAt": "2026-05-21T09:00:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Validazione fallita: tipologia deve essere una tra: Vite" }
+
++ Response 400 (application/json)
+    + Body
+            { "error": "Validazione fallita: varieta 'Sangiovese' non valida per tipologia 'Vite'. Varietà ammesse: Chardonnay, Pinot Nero, Müller-Thurgau, Teroldego, Marzemino" }
+
++ Response 400 (application/json)
+    + Body
+            { "error": "Validazione fallita: fase 'spaccata' non valida per tipologia 'Vite'. Fasi ammesse: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie" }
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+## Coltura singola [/api/v1/fields/{fieldId}/colture/{colturaId}]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+    + colturaId: `664a1b2c3d4e5f6a7b8c9d10` (string, required) - ID MongoDB della coltura
+
+### Aggiorna fase fenologica [PATCH]
+
+Aggiorna manualmente la fase fenologica di una coltura esistente. Aggiorna automaticamente
+anche il campo `dataAggiornamento`. Richiede autenticazione JWT e che l'utente sia il proprietario
+dell'appezzamento padre.
+
+Il campo `fase` deve essere una delle fasi previste per la tipologia della coltura:
+- **Vite**: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "fase": "allegagione"
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Fase fenologica aggiornata con successo",
+                "coltura": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d10",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "Vite",
+                    "varieta": "Chardonnay",
+                    "fase": "allegagione",
+                    "dataAggiornamento": "2026-05-22T09:30:00.000Z",
+                    "createdAt": "2026-05-21T09:00:00.000Z",
+                    "updatedAt": "2026-05-22T09:30:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "La fase fenologica è obbligatoria" }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Validazione fallita: fase 'spaccata' non valida per tipologia 'Vite'. Fasi ammesse: gemma_dormiente, germogliamento, fioritura, allegagione, invaiatura, maturazione, caduta_foglie" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Coltura non trovata" }
+
+# Group Meteo
+
+Endpoint per la gestione dei dati meteorologici associati agli appezzamenti.
+
+Il sistema utilizza le **stazioni meteo ufficiali di Meteo Trentino** (open data, Provincia Autonoma di Trento). Quando viene creato un nuovo appezzamento, il sistema:
+1. Trova automaticamente la stazione meteo più vicina alle sue coordinate (formula di Haversine)
+2. Recupera le ultime rilevazioni di temperatura, umidità relativa e precipitazioni
+3. Le salva nella collezione `DatiMeteo` associandole all'appezzamento
+
+I dati possono essere aggiornati manualmente tramite l'endpoint `/refresh` oppure consultati tramite `/latest` (ultima rilevazione) e `/storico` (ultime 48 ore).
+
+## Meteo appezzamento [/api/v1/fields/{fieldId}/meteo]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Ultimo dato meteo [GET /api/v1/fields/{fieldId}/meteo/latest]
+
+Restituisce l'ultima rilevazione meteo disponibile per l'appezzamento, insieme a `cacheInfo`
+(stato sincronizzazione, cfr. US28) e `statoMeteo` (sintesi dello stato del modulo meteo).
+Il campo `statoMeteo` può assumere uno dei seguenti valori:
+- **`ok`**: dato meteo presente e ultima sincronizzazione riuscita (caso normale)
+- **`offline_con_cache`**: ultima sincronizzazione fallita ma esistono dati cached (cfr. US28)
+- **`offline_senza_cache`**: ultima sincronizzazione fallita e NESSUN dato meteo disponibile per il campo (cfr. US29)
+- **`mai_sincronizzato`**: campo appena creato, nessun tentativo di sincronizzazione ancora effettuato
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "dato": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d20",
+                    "appezzamentoId": "683abc123def456789",
+                    "stazioneCode": "T0405",
+                    "stazioneNome": "Ala (Maso Le Pozze)",
+                    "timestamp": "2026-05-22T09:00:00.000Z",
+                    "temperaturaC": 16,
+                    "umiditaPerc": 64,
+                    "precipitazioniMm": 0,
+                    "createdAt": "2026-05-22T09:05:12.123Z"
+                },
+                "cacheInfo": {
+                    "ultimoTentativoSync": "2026-05-22T11:00:05.000Z",
+                    "ultimoSuccessoSync": "2026-05-22T11:00:05.000Z",
+                    "ultimoTentativoRiuscito": true,
+                    "etaDatoMinuti": 120
+                },
+                "statoMeteo": "ok"
+            }
+
++ Response 200 (application/json)
+
+    Nessun dato meteo + sincronizzazione fallita (campo appena creato + MeteoTrentino offline).
+
+    + Body
+
+            {
+                "dato": null,
+                "cacheInfo": {
+                    "ultimoTentativoSync": "2026-05-22T11:00:05.000Z",
+                    "ultimoSuccessoSync": null,
+                    "ultimoTentativoRiuscito": false,
+                    "etaDatoMinuti": null
+                },
+                "statoMeteo": "offline_senza_cache",
+                "message": "Servizio meteo non disponibile e nessun dato pregresso"
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+### Sintesi meteo di oggi [GET /api/v1/fields/{fieldId}/meteo/oggi]
+
+Restituisce una sintesi aggregata delle rilevazioni meteo della giornata corrente
+(dalle 00:00 di oggi fino al momento attuale): temperatura minima/massima/media,
+umidità media e precipitazioni totali. Utile per la dashboard meteo del campo.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "sintesi": {
+                    "data": "2026-05-22",
+                    "stazione": "T0405",
+                    "numeroRilevazioni": 12,
+                    "temperaturaMinC": 12.3,
+                    "temperaturaMaxC": 21.7,
+                    "temperaturaMediaC": 17.4,
+                    "umiditaMediaPerc": 62,
+                    "precipitazioniTotaliMm": 3.5
+                }
+            }
+
++ Response 200 (application/json)
+
+    Nessuna rilevazione disponibile per oggi.
+
+    + Body
+
+            {
+                "sintesi": null,
+                "message": "Nessuna rilevazione disponibile per oggi"
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+## Stato scheduler meteo [/api/v1/meteo/scheduler/status]
+
+### Stato dello scheduler meteo [GET]
+
+Restituisce lo stato dello scheduler che aggiorna automaticamente i dati meteo
+di tutti gli appezzamenti registrati. Lo scheduler usa una cron expression
+e viene eseguito ogni 60 minuti per impostazione predefinita.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "scheduler": {
+                    "attivo": true,
+                    "cronExpression": "0 * * * *",
+                    "descrizione": "Ogni ora al minuto 0",
+                    "ultimaEsecuzione": "2026-05-22T10:00:00.000Z",
+                    "campiAggiornatiUltimaEsecuzione": 5,
+                    "campiErroriUltimaEsecuzione": 0,
+                    "prossimaEsecuzione": "2026-05-22T11:00:00.000Z"
+                }
+            }
+
++ Response 200 (application/json)
+
+    Scheduler attivo ma non ancora eseguito (appena avviato).
+
+    + Body
+
+            {
+                "scheduler": {
+                    "attivo": true,
+                    "cronExpression": "0 * * * *",
+                    "descrizione": "Ogni ora al minuto 0",
+                    "ultimaEsecuzione": null,
+                    "campiAggiornatiUltimaEsecuzione": 0,
+                    "campiErroriUltimaEsecuzione": 0,
+                    "prossimaEsecuzione": "2026-05-22T11:00:00.000Z"
+                }
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+            
+### Storico meteo [GET /api/v1/fields/{fieldId}/meteo/storico]
+
+Restituisce le rilevazioni meteo per l'appezzamento nelle ultime N ore (default 48), ordinate dalla più recente. Utilizzato dalla pagina dettaglio per disegnare i grafici di andamento delle 3 grandezze (temperatura, umidità relativa, precipitazioni).
+Il parametro opzionale `periodoOre` permette di richiedere finestre più ampie (es. 168 per ultima settimana) o più strette (es. 24 per ultime 24 ore).
+
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    
+    + Parameters
+        + periodoOre: `48` (number, optional) - Numero di ore di storico da restituire (default 48, max 720 = 30 giorni)
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "dati": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d20",
+                        "appezzamentoId": "683abc123def456789",
+                        "stazioneCode": "T0405",
+                        "timestamp": "2026-05-22T09:00:00.000Z",
+                        "temperaturaC": 16,
+                        "umiditaPerc": 64,
+                        "precipitazioniMm": 0
+                    },
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d1f",
+                        "appezzamentoId": "683abc123def456789",
+                        "stazioneCode": "T0405",
+                        "timestamp": "2026-05-22T08:00:00.000Z",
+                        "temperaturaC": 15.2,
+                        "umiditaPerc": 68,
+                        "precipitazioniMm": 0.2
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+### Aggiorna dati meteo [POST /api/v1/fields/{fieldId}/meteo/refresh]
+
+Forza il recupero dei dati meteo più recenti dalla stazione assegnata all'appezzamento.
+Se l'appezzamento non ha ancora una stazione assegnata, il sistema:
+1. Calcola la stazione più vicina alle coordinate dell'appezzamento
+2. La salva come `stazioneAssegnata` nel campo
+3. Recupera i dati
+
+Questo endpoint viene chiamato **automaticamente** quando un nuovo appezzamento viene creato (`POST /api/v1/fields`).
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Dati meteo aggiornati con successo",
+                "stazione": {
+                    "code": "T0405",
+                    "nome": "Ala (Maso Le Pozze)",
+                    "distanzaKm": 2.3
+                },
+                "datiSalvati": 8,
+                "datoCorrente": {
+                    "timestamp": "2026-05-22T09:00:00.000Z",
+                    "temperaturaC": 16,
+                    "umiditaPerc": 64,
+                    "precipitazioniMm": 0
+                }
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
++ Response 503 (application/json)
+
+    Servizio Meteo Trentino momentaneamente non raggiungibile.
+
+    + Body
+
+            { "error": "Servizio meteo non disponibile, riprova più tardi" }
+
+# Group Bilancio Idrico
+Endpoint per il calcolo e la consultazione del bilancio idrico giornaliero dell'appezzamento.
+Il bilancio idrico viene calcolato automaticamente ogni notte (cron job alle 00:30) per ogni
+appezzamento che ha:
+- Una coltura associata con fase fenologica impostata
+- Almeno 24 ore di dati meteo recenti (temperatura min/max e precipitazioni)
+Il calcolo segue il modello **FAO-56 Hargreaves-Samani semplificato**:
+1. **ET0 (evapotraspirazione di riferimento)** in mm/giorno:
+ET0 = 0.0023 × (Tmedia + 17.8) × √(Tmax - Tmin) × Ra
+
+dove `Ra` (radiazione extraterrestre) è derivata da latitudine + giorno dell'anno.
+2. **ETc (evapotraspirazione della coltura)**:
+ETc = ET0 × Kc(fase fenologica)
+
+Coefficienti Kc per la vite: gemma_dormiente 0.2, germogliamento 0.3, fioritura 0.7,
+allegagione 0.85, invaiatura 0.7, maturazione 0.4, caduta_foglie 0.2.
+3. **Bilancio giornaliero**:
+bilancio(oggi) = precipitazioniMm - ETc
+riservaIdrica(oggi) = clamp(riservaIdrica(ieri) + bilancio, 0, capacitaCampo)
+umiditaSuoloPerc = (riservaIdrica / capacitaCampo) × 100
+
+con `capacitaCampo = 150 mm` (parametro standard per vite in Trentino).
+## Bilancio idrico appezzamento [/api/v1/fields/{fieldId}/bilancio-idrico]
++ Parameters
+ + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Bilancio idrico corrente e storico [GET]
+Restituisce il bilancio idrico più recente disponibile per l'appezzamento, insieme allo storico
+degli ultimi N giorni (default 30) per visualizzazioni grafiche.
++ Request
+ + Headers
+         Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ + Parameters
+     + giorni: `30` (number, optional) - Numero di giorni di storico da restituire (default 30, max 365)
++ Response 200 (application/json)
+ + Body
+         {
+             "corrente": {
+                 "_id": "664a1b2c3d4e5f6a7b8c9d30",
+                 "appezzamentoId": "683abc123def456789",
+                 "data": "2026-05-23",
+                 "precipitazioniMm": 4.5,
+                 "evapotraspirazioneMm": 3.2,
+                 "bilancio": 1.3,
+                 "riservaIdricaMm": 87.5,
+                 "umiditaSuoloPerc": 58,
+                 "createdAt": "2026-05-23T00:30:12.000Z"
+             },
+             "storico": [
+                 {
+                     "data": "2026-05-22",
+                     "bilancio": -2.1,
+                     "riservaIdricaMm": 86.2,
+                     "umiditaSuoloPerc": 57
+                 },
+                 {
+                     "data": "2026-05-21",
+                     "bilancio": 0.5,
+                     "riservaIdricaMm": 88.3,
+                     "umiditaSuoloPerc": 59
+                 }
+             ]
+         }
++ Response 200 (application/json)
+ Nessun bilancio disponibile (campo senza coltura/fase fenologica o senza dati meteo).
+ + Body
+         {
+             "corrente": null,
+             "storico": [],
+             "message": "Bilancio idrico non ancora disponibile. Assicurati che il campo abbia una coltura con fase fenologica impostata e che siano stati raccolti dati meteo per almeno 24 ore."
+         }
++ Response 401 (application/json)
+ + Body
+         { "error": "Token mancante" }
++ Response 403 (application/json)
+ + Body
+         { "error": "Non autorizzato" }
++ Response 404 (application/json)
+ + Body
+         { "error": "Appezzamento non trovato" }
+
+# Group Fenologia
+Endpoint per la consultazione dello stato fenologico calcolato automaticamente dal sistema.
+Il sistema usa il **modello Growing Degree Days (GDD)** per stimare l'avanzamento fenologico
+delle colture senza intervento manuale dell'utente.
+Formula:
+GDD giornaliero = max(0, Tmedia - Tbase)
+
+con `Tbase = 10°C` per la vite.
+Ogni notte all'01:00 il sistema:
+1. Per ogni coltura attiva, somma i GDD accumulati dalla `dataAggiornamento` (ultima transizione di fase) ad oggi
+2. Se i GDD superano la soglia definita per la fase corrente, la fase avanza automaticamente alla successiva
+3. La `dataAggiornamento` viene reimpostata alla data della transizione automatica
+L'utente può sempre forzare manualmente una fase tramite l'endpoint PATCH di US24, che ha precedenza sul calcolo automatico.
+## Fenologia appezzamento [/api/v1/fields/{fieldId}/fenologia]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Stato fenologico calcolato [GET]
+Restituisce lo stato fenologico corrente della coltura del campo, con i GDD accumulati nella
+fase attuale e la soglia per la transizione alla fase successiva.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "fenologia": {
+                    "colturaId": "664a1b2c3d4e5f6a7b8c9d10",
+                    "tipologia": "Vite",
+                    "varieta": "Chardonnay",
+                    "faseCorrente": "fioritura",
+                    "dataInizioFase": "2026-05-15T00:00:00.000Z",
+                    "gddAccumulati": 87.5,
+                    "fasePossibileSuccessiva": "allegagione",
+                    "sogliaGddProssima": 200,
+                    "percentualeProgresso": 44,
+                    "tBaseC": 10,
+                    "ultimoCalcolo": "2026-05-23T01:00:15.000Z"
+                }
+            }
++ Response 200 (application/json)
+    Nessuna fenologia disponibile (campo senza coltura).
+    + Body
+            {
+                "fenologia": null,
+                "message": "Nessuna coltura associata a questo appezzamento"
+            }
++ Response 200 (application/json)
+    Coltura presente ma senza fase fenologica impostata.
+    + Body
+            {
+                "fenologia": null,
+                "message": "La coltura non ha una fase fenologica impostata"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }         
+
+# Group Indici di rischio
+Endpoint per la consultazione degli indici di rischio calcolati dal sistema incrociando
+dati meteo, coltura e fase fenologica.
+In US33 è disponibile l'**indice fitosanitario per la peronospora della vite** (Plasmopara viticola).
+La visualizzazione semaforica cliccabile è stata aggiunta in US34. In US35 è disponibile anche l'**indice climatico** per le minacce alpine (gelate, stress termico, eccesso di umidità) — vedi sotto.
+L'indice fitosanitario è calcolato **on-demand** sulla finestra delle ultime 48 ore:
+1. Si contano le rilevazioni meteo con condizioni favorevoli all'infezione: `umidità relativa > 80%` E `15°C <= temperatura <= 25°C`
+2. La percentuale di ore favorevoli viene pesata per la **suscettibilità della fase fenologica** (fioritura e allegagione = massima vulnerabilità)
+3. Il punteggio risultante (0-100) è mappato su tre livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66)
+La response include anche una **raccomandazione** operativa testuale in base al livello (aggiunta in US34).
+## Indice fitosanitario appezzamento [/api/v1/fields/{fieldId}/indici/fitosanitario]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Indice rischio peronospora [GET]
+Restituisce il livello di rischio fitosanitario (peronospora) corrente per la coltura del campo,
+con il punteggio e i componenti del calcolo sulle ultime 48 ore.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "fitosanitario": {
+                    "patologia": "peronospora",
+                    "livello": "alto",
+                    "raccomandazione": "Rischio elevato di peronospora: valuta un trattamento preventivo entro 24-48h e monitora attentamente il campo.",
+                    "punteggio": 100,
+                    "faseCorrente": "fioritura",
+                    "suscettibilitaFase": 1,
+                    "oreAnalizzate": 48,
+                    "oreFavorevoli": 48,
+                    "percentualeOreFavorevoli": 100,
+                    "finestraOre": 48,
+                    "soglie": {
+                        "urPerc": 80,
+                        "tempMinC": 15,
+                        "tempMaxC": 25
+                    },
+                    "ultimoCalcolo": "2026-05-24T10:15:00.000Z"
+                }
+            }
++ Response 200 (application/json)
+    Nessuna coltura associata al campo.
+    + Body
+            {
+                "fitosanitario": null,
+                "message": "Nessuna coltura associata a questo appezzamento"
+            }
++ Response 200 (application/json)
+    Coltura senza fase fenologica oppure dati meteo insufficienti nelle ultime 48h.
+    + Body
+            {
+                "fitosanitario": null,
+                "message": "Indice non calcolabile: la coltura non ha una fase fenologica impostata oppure mancano dati meteo nelle ultime 48h"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+
+## Storico indici di rischio [/api/v1/fields/{fieldId}/indici/storico]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Serie storica indici [GET]
+
+Restituisce la serie storica degli indici di rischio fitosanitario e climatico per
+l'appezzamento, con risoluzione giornaliera. Default ultimi 12 mesi (365 giorni).
+
+Utile per visualizzare l'andamento stagionale dei rischi e identificare pattern
+ricorrenti anno su anno.
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Parameters
+        + giorni: `365` (number, optional) - Numero di giorni di storico (default 365, max 730 = 2 anni)
+        + tipo: `fitosanitario` (string, optional) - Filtra per tipoRischio (`fitosanitario` o `climatico`). Se omesso restituisce entrambi.
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "storico": [
+                    {
+                        "data": "2025-05-24",
+                        "tipoRischio": "fitosanitario",
+                        "livello": "basso",
+                        "valore": 22
+                    },
+                    {
+                        "data": "2025-05-24",
+                        "tipoRischio": "climatico",
+                        "livello": "medio",
+                        "valore": 45
+                    }
+                ],
+                "totaleRecord": 730,
+                "periodoGiorni": 365
+            }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
+## Indice climatico appezzamento [/api/v1/fields/{fieldId}/indici/climatico]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Indice rischio climatico [GET]
+Restituisce il rischio climatico corrente per l'appezzamento, valutando tre minacce alpine
+(gelate, stress termico, eccesso di umidità) sulla finestra delle ultime 48 ore.
+Viene restituita la **minaccia con il livello più alto**, più il dettaglio di tutte e tre.
+Per le gelate il punteggio è pesato per la sensibilità al gelo della fase fenologica e per
+l'esposizione del campo (un'esposizione a nord aumenta il rischio).
+Livelli: `basso` (< 33), `medio` (33-65), `alto` (>= 66).
+La response include anche una `descrizione` testuale della minaccia (usata come tooltip in UI, US36).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "climatico": {
+                    "livello": "alto",
+                    "minaccia": "gelate",
+                    "descrizione": "Gelate: rischio di danni da freddo a germogli e fiori (tipico delle gelate tardive primaverili).",
+                    "punteggio": 100,
+                    "faseCorrente": "germogliamento",
+                    "esposizione": "Nord",
+                    "finestraOre": 48,
+                    "dettaglio": {
+                        "gelate": { "punteggio": 100, "livello": "alto", "tMinC": -3 },
+                        "stressTermico": { "punteggio": 5, "livello": "basso", "tMaxC": 12 },
+                        "eccessoUmidita": { "punteggio": 10, "livello": "basso", "percOreUmide": 5 }
+                    },
+                    "ultimoCalcolo": "2026-05-24T10:15:00.000Z"
+                }
+            }
++ Response 200 (application/json)
+    Nessun dato meteo disponibile nelle ultime 48h.
+    + Body
+            {
+                "climatico": null,
+                "message": "Indice climatico non calcolabile: mancano dati meteo nelle ultime 48h"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+# Group Notifiche
+Endpoint per la consultazione delle notifiche in-app generate automaticamente dal sistema (US37).
+Ogni notte alle 02:00 un cron valuta gli indici di rischio (fitosanitario e climatico) di tutti i
+campi dell'utente e crea una notifica quando un indice raggiunge il livello **alto**.
+Per evitare spam, non viene creata una nuova notifica se ne esiste già una **non letta** per lo stesso
+campo e tipo di rischio.
+## Notifiche utente [/api/v1/notifiche]
+### Elenco notifiche [GET]
+Restituisce le notifiche dell'utente autenticato (le più recenti per prime, max 100) e il conteggio
+di quelle non ancora lette.
+
+La response include il conteggio `nonLette` che rappresenta TUTTE le notifiche non lette dell'utente
+(non solo quelle restituite in questa pagina). Utilizzato dal badge del campanello in Navbar.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Parameters
+        + limit: `50` (number, optional) - Numero massimo di notifiche da restituire (default 50, max 100). Ordinamento per `createdAt` decrescente (più recente prima).
++ Response 200 (application/json)
+    + Body
+            {
+                "notifiche": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d40",
+                        "userId": "664a1b2c3d4e5f6a7b8c9d00",
+                        "appezzamentoId": "683abc123def456789",
+                        "campoNome": "Vigneto Sud",
+                        "tipoRischio": "fitosanitario",
+                        "minaccia": "peronospora",
+                        "livello": "alto",
+                        "messaggio": "Rischio fitosanitario ALTO (peronospora) sul campo \"Vigneto Sud\".",
+                        "letta": false,
+                        "createdAt": "2026-05-24T02:00:05.000Z",
+                        "updatedAt": "2026-05-24T08:00:00.000Z"
+                    },
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d41",
+                        "userId": "664a1b2c3d4e5f6a7b8c9d00",
+                        "appezzamentoId": "683abc123def456790",
+                        "campoNome": "Vigneto Nord",
+                        "tipoRischio": "climatico",
+                        "minaccia": "gelate",
+                        "livello": "alto",
+                        "messaggio": "Rischio climatico ALTO (gelate) sul campo \"Vigneto Nord\".",
+                        "letta": false,
+                        "createdAt": "2026-05-24T02:00:06.000Z",
+                        "updatedAt": "2026-05-24T08:00:00.000Z"
+                    }
+                ],
+                "nonLette": 2
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
+
+## Notifica singola [/api/v1/notifiche/{id}]
+
++ Parameters
+    + id: `664a1b2c3d4e5f6a7b8c9d40` (string, required) - ID MongoDB della notifica
+
+### Marca notifica come letta [PATCH]
+
+Marca una notifica come letta. L'utente può marcare come letta solo le proprie notifiche.
+L'operazione è idempotente: marcare come letta una notifica già letta restituisce comunque 200.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "letta": true
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Notifica marcata come letta",
+                "notifica": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d40",
+                    "appezzamentoId": "683abc123def456789",
+                    "campoNome": "Vigneto Cembra",
+                    "tipoRischio": "fitosanitario",
+                    "minaccia": "peronospora",
+                    "livello": "alto",
+                    "messaggio": "Rischio fitosanitario alto per peronospora",
+                    "letta": true,
+                    "createdAt": "2026-05-24T08:00:00.000Z",
+                    "updatedAt": "2026-05-24T10:15:00.000Z"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "ID non valido" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Notifica non trovata" }
+
+ # Group Interventi
+
+Endpoint per la gestione del registro degli interventi agronomici (trattamenti fitosanitari e irrigazioni) effettuati sugli appezzamenti.
+
+Riferimento UML D2: classe astratta `InterventoAgronomico` con sottoclassi `TrattamentoFitosanitario` (US41) e `Irrigazione` (US42).
+
+I campi comuni sono: `appezzamentoId`, `dataOra`, `tipologia`, `note`. I campi specifici dipendono dalla tipologia:
+- **Trattamento**: `principioAttivo` (obbligatorio non vuoto), `quantita`, `unitaMisura` (es. "kg/ha")
+- **Irrigazione**: `volumeAcqua` (litri, > 0)
+
+US43: in lettura ogni intervento include due campi calcolati — `classificazione` (`Giustificato` / `Superfluo` / `Non valutabile`) e `livello` (il rischio del suo giorno: livello fitosanitario `basso`/`medio`/`alto` per i trattamenti, umidità del suolo per le irrigazioni). La classificazione confronta l'intervento col rischio della sua data (fitosanitario per i trattamenti, bilancio idrico per le irrigazioni).
+
+## Lista e creazione interventi [/api/v1/fields/{fieldId}/interventi]
+
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+
+### Crea nuovo intervento [POST]
+
+Registra un nuovo intervento agronomico sul campo. La validazione dipende dalla `tipologia`:
+trattamento richiede `principioAttivo` non vuoto, irrigazione richiede `volumeAcqua > 0`.
+
++ Request Trattamento fitosanitario (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    + Body
+
+            {
+                "tipologia": "trattamento",
+                "dataOra": "2026-05-24T08:00:00.000Z",
+                "principioAttivo": "rame",
+                "quantita": 2,
+                "unitaMisura": "kg/ha",
+                "note": "Trattamento preventivo peronospora"
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "message": "Intervento registrato con successo",
+                "intervento": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d50",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "trattamento",
+                    "dataOra": "2026-05-24T08:00:00.000Z",
+                    "principioAttivo": "rame",
+                    "quantita": 2,
+                    "unitaMisura": "kg/ha",
+                    "note": "Trattamento preventivo peronospora",
+                    "createdAt": "2026-05-24T08:05:12.000Z",
+                    "updatedAt": "2026-05-24T08:05:12.000Z",
+                    "classificazione": "Giustificato",
+                    "livello": "alto"
+                }
+            }
+
++ Response 400 (application/json)
+
+    + Body
+
+            { "error": "Validazione fallita: principioAttivo non può essere vuoto" }
+
++ Response 401 (application/json)
+
+    + Body
+
+            { "error": "Token mancante" }
+
++ Response 403 (application/json)
+
+    + Body
+
+            { "error": "Non autorizzato" }
+
++ Response 404 (application/json)
+
+    + Body
+
+            { "error": "Appezzamento non trovato" }
+
++ Request Irrigazione (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "tipologia": "irrigazione",
+                "dataOra": "2026-05-26T07:00:00.000Z",
+                "volumeAcqua": 150,
+                "note": "Irrigazione mattutina post-siccità"
+            }
++ Response 201 (application/json)
+    + Body
+            {
+                "message": "Intervento registrato con successo",
+                "intervento": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d51",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "irrigazione",
+                    "dataOra": "2026-05-26T07:00:00.000Z",
+                    "volumeAcqua": 150,
+                    "note": "Irrigazione mattutina post-siccità",
+                    "createdAt": "2026-05-26T07:02:00.000Z",
+                    "updatedAt": "2026-05-26T07:02:00.000Z",
+                    "classificazione": "Superfluo",
+                    "livello": "suolo 72%"
+                }
+            }
++ Response 400 (application/json)
+    + Body
+            {
+                "error": "Validazione fallita: volumeAcqua deve essere > 0"
+            }
+
+### Lista interventi [GET]
+Restituisce gli ultimi interventi (trattamenti fitosanitari e irrigazioni) registrati
+sull'appezzamento, ordinati per data decrescente (più recenti prima). Max 50.
+US44: filtri opzionali combinabili — `tipologia` (`trattamento`|`irrigazione`) e `giorni` (ultimi N giorni).
++ Parameters
+    + tipologia: `irrigazione` (string, optional) - Filtra per tipologia: `trattamento` o `irrigazione`
+    + giorni: `30` (number, optional) - Mostra solo gli interventi degli ultimi N giorni
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "interventi": [
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d51",
+                        "appezzamentoId": "683abc123def456789",
+                        "tipologia": "irrigazione",
+                        "dataOra": "2026-05-26T07:00:00.000Z",
+                        "volumeAcqua": 150,
+                        "note": "Irrigazione mattutina post-siccità",
+                        "createdAt": "2026-05-26T07:02:00.000Z",
+                        "classificazione": "Superfluo",
+                        "livello": "suolo 72%"
+                    },
+                    {
+                        "_id": "664a1b2c3d4e5f6a7b8c9d50",
+                        "appezzamentoId": "683abc123def456789",
+                        "tipologia": "trattamento",
+                        "dataOra": "2026-05-24T08:00:00.000Z",
+                        "principioAttivo": "rame",
+                        "quantita": 2,
+                        "unitaMisura": "kg/ha",
+                        "note": "Trattamento preventivo peronospora",
+                        "createdAt": "2026-05-24T08:05:12.000Z",
+                        "classificazione": "Giustificato",
+                        "livello": "alto"
+                    }
+                ]
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+## Modifica intervento [/api/v1/fields/{fieldId}/interventi/{interventoId}]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+    + interventoId: `664a1b2c3d4e5f6a7b8c9d50` (string, required) - ID MongoDB dell'intervento
+### Modifica intervento [PATCH]
+Aggiorna un intervento esistente (US45). `tipologia` e `appezzamentoId` non sono modificabili; si possono
+aggiornare `dataOra`, `note` e i campi specifici (`principioAttivo`/`quantita`/`unitaMisura` per i trattamenti,
+`volumeAcqua` per le irrigazioni). Validazione condizionale come nel POST. La response include la `classificazione` ricalcolata.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "quantita": 3,
+                "note": "Dose corretta dopo verifica"
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "message": "Intervento aggiornato con successo",
+                "intervento": {
+                    "_id": "664a1b2c3d4e5f6a7b8c9d50",
+                    "appezzamentoId": "683abc123def456789",
+                    "tipologia": "trattamento",
+                    "dataOra": "2026-05-24T08:00:00.000Z",
+                    "principioAttivo": "rame",
+                    "quantita": 3,
+                    "unitaMisura": "kg/ha",
+                    "note": "Dose corretta dopo verifica",
+                    "createdAt": "2026-05-24T08:05:12.000Z",
+                    "updatedAt": "2026-05-26T10:00:00.000Z",
+                    "classificazione": "Giustificato",
+                    "livello": "alto"
+                }
+            }
++ Response 400 (application/json)
+    + Body
+            { "error": "Validazione fallita: principioAttivo non può essere vuoto" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Intervento non trovato" }
+
+### Elimina intervento [DELETE]
+Elimina definitivamente un intervento dal registro (US46).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            { "message": "Intervento eliminato con successo" }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Intervento non trovato" }
+# Group Dashboard sostenibilità
+Endpoint per la dashboard di sostenibilità dell'utente, che aggrega i dati di tutti i suoi appezzamenti (US47+).
+## Sintesi sostenibilità [/api/v1/dashboard/sostenibilita]
+### Sintesi sostenibilità [GET]
+Restituisce una sintesi di sostenibilità dell'utente, aggregando gli interventi di tutti i suoi campi.
+US47: `haInterventi` / `interventiTotali` (stato vuoto). US48: breakdown della classificazione
+(`giustificati`, `superflui`, `nonValutabili`) e `percentualeGiustificati` (% di giustificati sui soli interventi
+classificabili; `null` se nessuno è classificabile). US49: filtro per annata via `?anno`; la response include
+`annateDisponibili` (anni con interventi) e `annoSelezionato`. US50: `risparmioIdricoLitri` (litri risparmiati vs un regime "a calendario" = 200 L/settimana × 26 settimane per campo irrigato), con `litriIrrigati` e `baselineIdricaLitri`. US51: `risparmioChimicoKg` (kg di principio attivo risparmiati vs un regime a calendario = 8 trattamenti × 2 kg per campo trattato), con `kgTrattati` e `baselineChimicaKg`. Il trend del rischio arriverà nelle US successive.
++ Parameters
+    + anno: `2025` (number, optional) - Annata (anno solare) da visualizzare; default: la più recente con interventi
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    Account con interventi registrati.
+    + Body
+            {
+                "haInterventi": true,
+                "annoSelezionato": 2026,
+                "annateDisponibili": [2026, 2025],
+                "interventiTotali": 12,
+                "giustificati": 7,
+                "superflui": 3,
+                "nonValutabili": 2,
+                "classificabili": 10,
+                "percentualeGiustificati": 70,
+                "litriIrrigati": 800,
+                "baselineIdricaLitri": 5200,
+                "risparmioIdricoLitri": 4400,
+                "kgTrattati": 4,
+                "baselineChimicaKg": 16,
+                "risparmioChimicoKg": 12
+            }
++ Response 200 (application/json)
+    Account senza interventi (stato vuoto).
+    + Body
+            {
+                "haInterventi": false,
+                "annoSelezionato": 2026,
+                "annateDisponibili": [],
+                "interventiTotali": 0,
+                "giustificati": 0,
+                "superflui": 0,
+                "nonValutabili": 0,
+                "classificabili": 0,
+                "percentualeGiustificati": null,
+                "litriIrrigati": 0,
+                "baselineIdricaLitri": 0,
+                "risparmioIdricoLitri": null,
+                "kgTrattati": 0,
+                "baselineChimicaKg": 0,
+                "risparmioChimicoKg": null
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }            
+
+## Trend rischio medio [/api/v1/dashboard/trend-rischio{?anno}]
++ Parameters
+    + anno: `2026` (number, optional) - Annata di cui calcolare il trend (default: anno corrente)
+### Trend rischio medio giornaliero [GET]
+Restituisce il **rischio medio giornaliero** (media dei punteggi `IndiceRischio`, fitosanitario + climatico,
+di tutti i campi dell'utente) per ogni giorno dell'annata — usato per il grafico del trend stagionale (US52).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "anno": 2026,
+                "trend": [
+                    { "data": "2026-01-01", "rischioMedio": 18 },
+                    { "data": "2026-01-02", "rischioMedio": 22 }
+                ]
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
+
+## Report sostenibilità [/api/v1/dashboard/report{?anno}]
++ Parameters
+    + anno: `2026` (number, optional) - Annata (anno solare) di cui generare il report (default: anno corrente)
+### Genera report PDF di sostenibilità [GET]
+Restituisce un **file PDF scaricabile** con il report di sostenibilità stagionale dell'utente (US54). Il PDF contiene:
+- dati anagrafici dell'azienda (nome, nomeAzienda, email),
+- indicatori chiave dell'annata: **% interventi giustificati** (US48), **risparmio idrico stimato in litri** (US50), **risparmio chimico stimato in kg** (US51), **rischio medio annuo** (media dei punteggi `IndiceRischio` dell'anno),
+- numero totale di interventi registrati nell'annata.
+
+La response ha `Content-Type: application/pdf` e `Content-Disposition: attachment`, così il browser scarica direttamente il file (nome suggerito `report-sostenibilita-<anno>.pdf`). Il client lo invoca con header `Authorization: Bearer ...` e gestisce il blob lato JS (non è scaricabile da un link semplice).
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/pdf)
+    + Headers
+            Content-Disposition: attachment; filename="report-sostenibilita-2026.pdf"
+    + Body
+            <binary PDF — contenuto non rappresentato in JSON>
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 500 (application/json)
+    + Body
+            { "error": "Errore interno del server" }
+    
+# Group Consumi
+Endpoint per il monitoraggio dei consumi (acqua e principio attivo) di un appezzamento su un periodo scelto (US53). Nella UI è una sezione della Dashboard.
+## Consumi appezzamento [/api/v1/fields/{fieldId}/consumi{?giorni}]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+    + giorni: `60` (number, optional) - Periodo in giorni su cui sommare i consumi (default 60)
+### Consumi totali nel periodo [GET]
+Restituisce i totali di acqua irrigata (litri) e di principio attivo (kg) per l'appezzamento negli ultimi N giorni.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "campoId": "683abc123def456789",
+                "campoNome": "Vigneto Sud",
+                "periodoGiorni": 60,
+                "acquaTotaleLitri": 450,
+                "principioAttivoTotaleKg": 6.5,
+                "numeroInterventi": 5
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+            
+# Group Simulatore meteo
+Endpoint per il simulatore meteo (US55-59): permette all'agricoltore di costruire scenari ipotetici modificando manualmente i parametri meteorologici di un appezzamento, per valutare l'impatto sugli indici di rischio. Nella UI è una pagina top-level (`/simulatore`) raggiungibile dalla Navbar, con un selettore di campo all'inizio.
+
+## Stato iniziale del simulatore [/api/v1/fields/{fieldId}/simulatore/stato-iniziale]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Stato iniziale del simulatore [GET]
+Restituisce lo **stato reale corrente** dell'appezzamento, usato come punto di partenza del simulatore meteo (US55):
+
+- `meteoReale`: aggregazione dei `DatiMeteo` del campo con **cascade lookback** 24h → 7 giorni → 30 giorni (US57): la prima finestra non vuota vince. Restituisce temperatura minima/massima (°C), umidità relativa media (%), precipitazioni totali (mm). I singoli campi sono `null` se non ci sono rilevazioni in 30 giorni.
+- `fase`: fase fenologica corrente della coltura più recente del campo (`null` se nessuna coltura).
+- `indici`: indici di rischio reali calcolati on-demand sulle ultime 48h, riusando i service di US33 (fitosanitario) e US35 (climatico). Possono essere `null` se mancano dati meteo o coltura.
+- `timestampUltimaSync` (US59, D2 §2.5.1 `Simulazione.reset()`): ISO 8601 del `timestamp` del `DatiMeteo` più recente del campo. `null` se il campo non ha mai sincronizzato meteo. Il frontend lo usa per mostrare "Aggiornato X min fa" accanto al bottone "Ripristina valori reali".
+
+Da questi valori l'utente parte per modificare i parametri (US55); in US56 gli indici verranno ricalcolati in tempo reale con gli scenari ipotetici.
++ Request
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++ Response 200 (application/json)
+    + Body
+            {
+                "campoNome": "Vigneto Sud",
+                "meteoReale": {
+                    "tMin": 12.4,
+                    "tMax": 24.8,
+                    "urMedia": 68,
+                    "precipitazioni": 0.0
+                },
+                "fase": "Fioritura",
+                "indici": {
+                    "fitosanitario": {
+                        "livello": "medio",
+                        "valore": 45
+                    },
+                    "climatico": {
+                        "livello": "basso",
+                        "valore": 20,
+                        "minaccia": "nessuna"
+                    }
+                },
+                "timestampUltimaSync": "2026-05-28T07:32:11.000Z"
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+## Ricalcolo indici simulati [/api/v1/fields/{fieldId}/simulatore/ricalcola]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Ricalcola indici da parametri meteo simulati [POST]
+Calcola gli **indici di rischio simulati** (fitosanitario + climatico) a partire dai parametri meteo passati nel body, senza salvare nulla nel DB (US56). Usato dal frontend del simulatore con debounce di ~500ms al cambio di uno qualsiasi dei parametri, per mostrare in tempo reale l'impatto degli scenari ipotetici.
+
+Logica del nuovo `services/simulatoreService.js` (versione semplificata coerente con US33/US35, su input scalari):
+
+- **Fitosanitario** (modello peronospora): base su UR e T media `(tMin+tMax)/2`. UR ≥ 80% e T in [15,25] °C → rischio alto (80). Pioggia ≥ 5 mm → +10. Modulazione per `fase` (suscettibili: Fioritura/Allegagione/Sviluppo grappolo +15; poco suscettibili: Maturazione/Riposo -10). Valore clampato a [0, 100].
+- **Climatico**: tre sotto-minacce valutate in parallelo (`gelate` da `tMin`, `stress_termico` da `tMax`, `eccesso_umidita` da `urMedia`). Restituisce la **minaccia dominante** (valore più alto) e il suo punteggio.
+
+Il livello è derivato dal valore (`<34`=basso, `34-66`=medio, `≥67`=alto). La `fase` non viene passata dal client: è letta lato backend dalla `Coltura` più recente del campo.
+
+**US58 (D2 §2.5.2 `ParametriSimulazione.isValid()`)**: la response include sempre un campo `warnings: [{campo, valore, messaggio}]` che segnala i parametri inseriti fuori dai range fisicamente plausibili (`tMin`: -25…30 °C · `tMax`: -10…45 °C · `urMedia`: 0…100 % · `precipitazioni`: 0…200 mm) e l'eventuale violazione del vincolo logico `tMin ≤ tMax`. Array vuoto se tutti i valori sono plausibili. Lo scenario viene comunque calcolato — i warnings sono solo informativi.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "tMin": -3,
+                "tMax": 12,
+                "urMedia": 85,
+                "precipitazioni": 8
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "fitosanitario": {
+                    "livello": "medio",
+                    "valore": 60
+                },
+                "climatico": {
+                    "livello": "alto",
+                    "valore": 90,
+                    "minaccia": "gelate"
+                },
+                "warnings": [
+                    {
+                        "campo": "tMin",
+                        "valore": -50,
+                        "messaggio": "Temperatura minima -50 °C fuori dal range plausibile (-25 … 30 °C)"
+                    }
+                ]
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
+
+
+## Confronto scenari [/api/v1/fields/{fieldId}/simulatore/confronto]
++ Parameters
+    + fieldId: `683abc123def456789` (string, required) - ID MongoDB dell'appezzamento
+### Confronto scenario reale vs simulato [POST]
+Restituisce in un'**unica risposta** i due scenari del campo (reale e simulato) con i rispettivi parametri meteo, indici di rischio e il delta (simulato − reale), per alimentare il grafico comparativo del simulatore (US57). Il frontend chiama questo endpoint con debounce di ~500 ms al cambio dei parametri e sostituisce sia il vecchio `/ricalcola` sia il fetch degli indici reali — single source of truth della pagina simulatore.
+
+- `scenarioReale.meteo`: aggregazione 24h dei `DatiMeteo` del campo (come in `/stato-iniziale`).
+- `scenarioReale.indici`: indici reali dai service di US33 (fitosanitario, su 48h DB) e US35 (climatico).
+- `scenarioSimulato.meteo`: echo dei parametri ricevuti nel body (normalizzati a numero).
+- `scenarioSimulato.indici`: indici calcolati dal `simulatoreService` (US56) sugli stessi parametri + la `fase` letta dalla `Coltura` corrente.
+- `delta.fitosanitario` e `delta.climatico`: differenza dei valori (`scenarioSimulato.valore − scenarioReale.valore`). Positivo = scenario simulato più grave del reale. `null` se uno dei due indici non è calcolabile.
+- `warnings`: array di `{campo, valore, messaggio}` con i parametri fuori dai range fisicamente plausibili (US58, D2 §2.5.2 `ParametriSimulazione.isValid()`). Array vuoto se tutto plausibile; lo scenario viene calcolato comunque.
++ Request (application/json)
+    + Headers
+            Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    + Body
+            {
+                "tMin": -3,
+                "tMax": 12,
+                "urMedia": 85,
+                "precipitazioni": 8
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "campoNome": "Vigneto Sud",
+                "fase": "Fioritura",
+                "scenarioReale": {
+                    "meteo": {
+                        "tMin": 12.4,
+                        "tMax": 24.8,
+                        "urMedia": 68,
+                        "precipitazioni": 0.0
+                    },
+                    "indici": {
+                        "fitosanitario": { "livello": "medio", "valore": 45 },
+                        "climatico": { "livello": "basso", "valore": 20, "minaccia": "nessuna" }
+                    }
+                },
+                "scenarioSimulato": {
+                    "meteo": {
+                        "tMin": -3,
+                        "tMax": 12,
+                        "urMedia": 85,
+                        "precipitazioni": 8
+                    },
+                    "indici": {
+                        "fitosanitario": { "livello": "medio", "valore": 60 },
+                        "climatico": { "livello": "alto", "valore": 90, "minaccia": "gelate" }
+                    }
+                },
+                "delta": {
+                    "fitosanitario": 15,
+                    "climatico": 70
+                },
+                "warnings": []
+            }
++ Response 401 (application/json)
+    + Body
+            { "error": "Token mancante" }
++ Response 403 (application/json)
+    + Body
+            { "error": "Non autorizzato" }
++ Response 404 (application/json)
+    + Body
+            { "error": "Appezzamento non trovato" }
