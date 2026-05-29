@@ -182,6 +182,50 @@ async function calcolaBilancioGiorno(field, data) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
+// Calcola il bilancio idrico "corrente" ON-DEMAND, SENZA persistere — US48
+//
+// Speculare al fallback on-demand dei trattamenti (rischioFitosanitarioService):
+// quando per un campo non esiste alcuno snapshot di bilancio storico, la
+// classificazione dell'irrigazione può comunque stimare l'umidità del suolo
+// calcolandola al volo sul giorno indicato (default: oggi).
+//
+// A differenza di calcolaBilancioGiorno NON lancia eccezioni e NON scrive sul DB:
+// ritorna null se mancano dati meteo / coltura / fase, lasciando alla
+// classificazione la decisione di marcare l'intervento come "Non valutabile".
+// ────────────────────────────────────────────────────────────────────────────────
+async function calcolaBilancioOnDemand(field, data = new Date()) {
+  const dataNorm = new Date(data);
+  dataNorm.setHours(0, 0, 0, 0);
+  const dataFine = new Date(dataNorm);
+  dataFine.setDate(dataFine.getDate() + 1);
+
+  const datiGiorno = await getDatiAggregatiGiorno(field._id, dataNorm, dataFine);
+  if (!datiGiorno) return null;
+
+  const coltura = await Coltura.findOne({ appezzamentoId: field._id }).sort({ createdAt: -1 });
+  if (!coltura || !coltura.fase) return null;
+  const Kc = KC_VITE[coltura.fase];
+  if (Kc === undefined) return null;
+
+  const ET0 = calcolaET0(datiGiorno.tMax, datiGiorno.tMin, field.latitudine, dataNorm);
+  const ETc = ET0 * Kc;
+
+  const dataIeri = new Date(dataNorm);
+  dataIeri.setDate(dataIeri.getDate() - 1);
+  const bilancioIeri = await BilancioIdricoGiornaliero.findOne({
+    appezzamentoId: field._id,
+    data: dataIeri,
+  });
+  const riservaIeri = bilancioIeri ? bilancioIeri.riservaIdricaMm : RISERVA_INIZIALE_DEFAULT;
+
+  let riservaIdricaMm = riservaIeri + (datiGiorno.precipitazioniTotali - ETc);
+  if (riservaIdricaMm < 0) riservaIdricaMm = 0;
+  if (riservaIdricaMm > CAPACITA_CAMPO_MM) riservaIdricaMm = CAPACITA_CAMPO_MM;
+
+  return { umiditaSuoloPerc: Math.round((riservaIdricaMm / CAPACITA_CAMPO_MM) * 100) };
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
 // Calcola il bilancio per TUTTI i campi del sistema (usato dal cron)
 // ────────────────────────────────────────────────────────────────────────────────
 async function calcolaBilancioTuttiCampi(data = new Date()) {
@@ -208,6 +252,7 @@ module.exports = {
   calcolaET0,
   calcolaRa,
   calcolaBilancioGiorno,
+  calcolaBilancioOnDemand,
   calcolaBilancioTuttiCampi,
   KC_VITE,
   CAPACITA_CAMPO_MM,
