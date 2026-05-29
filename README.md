@@ -312,7 +312,18 @@ Architettura del deploy:
 - **Database**: MongoDB Atlas (cluster cloud, network access aperto a Render)
 - **HTTPS/TLS** gestito automaticamente da Render
 
+<<<<<<< HEAD
 > **Cold start (piano gratuito Render)**: i servizi vanno in stand-by dopo periodi di inattività; il primo accesso può richiedere ~50 secondi per il "risveglio". Le richieste successive sono immediate.
+=======
+## Crediti immagini
+
+Le immagini della landing page provengono da fonti libere:
+- Foto Unsplash (licenza Unsplash, libera per uso commerciale)
+- "Val di Cembra - Cembra e Faver visti da Sevignano" — Syrio, CC BY-SA 3.0, via Wikimedia Commons
+- "Vigneti con vista su Paganella e Brenta" — CC BY-SA 4.0, via Wikimedia Commons
+
+## Team
+>>>>>>> a94a651bc0787acd2678d6d6665f4c57fbd2d14c
 
 ---
 

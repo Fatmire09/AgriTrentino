@@ -36,14 +36,18 @@ router.post('/', requireAuth, async (req, res) => {
     });
     await field.save();
 
-    // US25: avvia in background il fetch meteo iniziale (non blocca la risposta al client)
-    meteoService.aggiornaMeteoCampo(field)
-      .then((risultato) => {
-        console.log(`[meteo auto-trigger] campo ${field._id}: ${risultato.datiSalvati} dati salvati da ${risultato.stazione.code}`);
-      })
-      .catch((err) => {
-        console.error(`[meteo auto-trigger] campo ${field._id}: errore`, err.message);
-      });
+    // US25: avvia in background il fetch meteo iniziale (non blocca la risposta al client).
+    // Saltato durante i test automatici (NODE_ENV=test) per non sporcare l'output con
+    // chiamate esterne/DB dopo la pulizia del database di test.
+    if (process.env.NODE_ENV !== 'test') {
+      meteoService.aggiornaMeteoCampo(field)
+        .then((risultato) => {
+          console.log(`[meteo auto-trigger] campo ${field._id}: ${risultato.datiSalvati} dati salvati da ${risultato.stazione.code}`);
+        })
+        .catch((err) => {
+          console.error(`[meteo auto-trigger] campo ${field._id}: errore`, err.message);
+        });
+    }
 
     return res.status(201).json({
       message: 'Appezzamento creato con successo',

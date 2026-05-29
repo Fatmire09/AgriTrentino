@@ -5,7 +5,7 @@ const soluzioni = [
     icon: <ShieldCheck className="w-6 h-6" />,
     title: 'Indici di rischio personalizzati',
     description:
-      "Incrociando i dati meteorologici in tempo reale con il profilo della realtà agricola (tipo di coltura, pendenza, esposizione, fase fenologica), il sistema genera indici visivi intuitivi — una scala cromatica semaforica — che comunicano istantaneamente il livello di rischio fitosanitario e climatico.",
+      "Incrociando i dati meteorologici in tempo reale con il profilo della realtà agricola (tipo di coltura, pendenza, esposizione, fase fenologica), il sistema genera indici visivi intuitivi, come una scala cromatica semaforica, che comunicano istantaneamente il livello di rischio fitosanitario e climatico.",
   },
   {
     icon: <Sliders className="w-6 h-6" />,

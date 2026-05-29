@@ -109,9 +109,9 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Desktop Nav Links */}
+          {/* Desktop Nav Links — solo per utenti NON autenticati (àncore alla landing) */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {!isLoggedIn && navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
@@ -266,7 +266,7 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden pb-4 pt-2 border-t border-gray-100">
             <div className="flex flex-col gap-3">
-              {navLinks.map((link) => (
+              {!isLoggedIn && navLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}

@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// Immagini a tema agricoltura trentina (alta risoluzione):
+// - passaggio tra i filari di viti (Unsplash)
+// - Val di Cembra, Cembra e Faver (Wikimedia Commons, CC BY-SA 3.0)
+// - vigneti con vista su Paganella e Brenta (Wikimedia Commons, CC BY-SA 4.0)
+// - meleto con mele mature (Unsplash)
 const heroImages = [
-  'https://images.unsplash.com/photo-1764590385577-18560eab8f7b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-  'https://images.unsplash.com/photo-1642156496751-9e01ee874632?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-  'https://images.unsplash.com/photo-1566746128939-55dae21426c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-  'https://images.unsplash.com/photo-1704462347567-6b7be3a56d74?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+  'https://images.unsplash.com/photo-1745426867834-d6d3bf080195?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600',
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Val_di_Cembra_-_Cembra_e_Faver_visti_da_Sevignano.JPG/1920px-Val_di_Cembra_-_Cembra_e_Faver_visti_da_Sevignano.JPG',
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Vigneti_con_vista_su_Paganella_e_Brenta.jpg/1920px-Vigneti_con_vista_su_Paganella_e_Brenta.jpg',
+  'https://images.unsplash.com/photo-1745962417587-365bef211257?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600',
 ]
 
 export default function Hero() {

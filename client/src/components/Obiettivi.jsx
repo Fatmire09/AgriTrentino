@@ -9,7 +9,7 @@ export default function Obiettivi() {
         className="absolute inset-0 z-0"
         style={{
           backgroundImage:
-            "url('https://images.unsplash.com/photo-1774865847272-b6f322fe6303?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080')",
+            "url('https://images.unsplash.com/photo-1581318369461-c134cd99e33a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.06,
