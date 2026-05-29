@@ -32,3 +32,6 @@ package-lock.json
 
 # Test coverage output (US65)
 server/coverage/
+
+# Build cache
+client/.vite/
