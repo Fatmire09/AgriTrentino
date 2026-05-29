@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Obiettivi from './components/Obiettivi'
@@ -29,23 +29,33 @@ function Fallback() {
   )
 }
 
+// La landing page informativa (RF01) è riservata agli utenti NON autenticati.
+// Un utente già loggato viene reindirizzato alla dashboard.
+function Landing() {
+  const isLoggedIn = !!localStorage.getItem('token')
+  if (isLoggedIn) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return (
+    <div className="min-h-screen w-full">
+      <Navbar />
+      <main>
+        <Hero />
+        <Obiettivi />
+        <ComeFunziona />
+        <CTAFinale />
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<Fallback />}>
         <Routes>
-          <Route path="/" element={
-            <div className="min-h-screen w-full">
-              <Navbar />
-              <main>
-                <Hero />
-                <Obiettivi />
-                <ComeFunziona />
-                <CTAFinale />
-              </main>
-              <Footer />
-            </div>
-          } />
+          <Route path="/" element={<Landing />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
