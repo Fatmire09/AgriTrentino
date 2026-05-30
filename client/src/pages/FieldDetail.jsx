@@ -1179,7 +1179,7 @@ export default function FieldDetail() {
                   <option key={f} value={f}>{ETICHETTE_FASI[f] || f}</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500">La fase fenologica viene usata per il calcolo degli indici di rischio (in arrivo nelle prossime US).</p>
+              <p className="text-xs text-gray-500">La fase fenologica viene usata per il calcolo degli indici di rischio.</p>
 
               {colturaError && <p className="text-red-600 text-sm">{colturaError}</p>}
 
